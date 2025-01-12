@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"math/big"
 	"os"
 
 	"github.com/charmbracelet/log"
 
 	"github.com/timmo001/go-automate/config"
+	"github.com/timmo001/go-automate/homeassistant"
 	"github.com/urfave/cli/v3"
 )
 
@@ -17,6 +20,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+
+	log.Infof("Loaded config: %v", cfg)
 
 	cfg, err = cfg.Setup()
 	if err != nil {
@@ -44,7 +49,18 @@ func main() {
 									firstArg := args.First()
 									log.Infof("First arg: %s", firstArg)
 
-									return ha.
+									homeassistant.Config = &cfg.HomeAssistant
+									conn := homeassistant.Connect()
+									resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
+										ID:      randomID(),
+										Type:    "call_service",
+										Domain:  "input_boolean",
+										Service: "toggle",
+										Target:  map[string]string{"entity_id": "input_boolean." + firstArg},
+									})
+									log.Infof("Call service response: %v", resp)
+
+									return nil
 								},
 							},
 						},
@@ -59,4 +75,13 @@ func main() {
 	}
 
 	log.Info("------ Exiting ------")
+}
+
+func randomID() int {
+	reader := rand.Reader
+	n, err := rand.Int(reader, big.NewInt(1000))
+	if err != nil {
+		log.Fatalf("error generating random ID: %v", err)
+	}
+	return int(n.Int64())
 }

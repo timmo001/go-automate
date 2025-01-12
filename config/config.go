@@ -39,7 +39,7 @@ func Load() (*Config, error) {
 
 	// Create the config directory if it doesn't exist
 	os.MkdirAll(configDirPath, 0755)
-	os.WriteFile(configDirPath+"/config.yml", []byte{}, 0644)
+	// os.WriteFile(configDirPath+"/config.yml", []byte{}, 0644)
 	viper.AddConfigPath(configDirPath)
 
 	// Set default values
@@ -70,7 +70,7 @@ func (cfg *Config) Save() error {
 }
 
 func (cfg *Config) Setup() (*Config, error) {
-	if cfg.HomeAssistant.URL != "" && cfg.HomeAssistant.Token != "" {
+	if cfg.HomeAssistant.Token == "" {
 		log.Info("------ Setup ------")
 
 		form := huh.NewForm(

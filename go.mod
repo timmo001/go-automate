@@ -5,6 +5,7 @@ go 1.23.4
 require (
 	github.com/charmbracelet/huh v0.6.0
 	github.com/charmbracelet/log v0.4.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/viper v1.19.0
 	github.com/urfave/cli/v3 v3.0.0-beta1
 )
