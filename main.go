@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"os"
 
@@ -27,6 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+	homeassistant.Config = &cfg.HomeAssistant
 
 	cmd := &cli.Command{
 		Name:  "Go Automate",
@@ -45,22 +47,7 @@ func main() {
 								Name:    "toggle",
 								Aliases: []string{"t"},
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									args := cmd.Args()
-									firstArg := args.First()
-									log.Infof("First arg: %s", firstArg)
-
-									homeassistant.Config = &cfg.HomeAssistant
-									conn := homeassistant.Connect()
-									resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
-										ID:      randomID(),
-										Type:    "call_service",
-										Domain:  "input_boolean",
-										Service: "toggle",
-										Target:  map[string]string{"entity_id": "input_boolean." + firstArg},
-									})
-									log.Infof("Call service response: %v", resp)
-
-									return nil
+									return cmdHACallService(cmd, "input_boolean", "toggle")
 								},
 							},
 						},
@@ -75,6 +62,27 @@ func main() {
 	}
 
 	log.Info("------ Exiting ------")
+}
+
+func cmdHACallService(
+	cmd *cli.Command,
+	domain, service string,
+) error {
+	args := cmd.Args()
+	firstArg := args.First()
+	log.Infof("First arg: %s", firstArg)
+
+	conn := homeassistant.Connect()
+	resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
+		ID:      randomID(),
+		Type:    "call_service",
+		Domain:  domain,
+		Service: service,
+		Target:  map[string]string{"entity_id": fmt.Sprintf("%s.%s", domain, firstArg)},
+	})
+	log.Infof("Call service response: %v", resp)
+
+	return nil
 }
 
 func randomID() int {
