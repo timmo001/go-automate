@@ -40,31 +40,19 @@ func main() {
 				Usage:   "Interact with Home Assistant",
 				Commands: []*cli.Command{
 					{
-						Name:    "input_boolean",
-						Aliases: []string{"ib"},
-						Commands: []*cli.Command{
-							{
-								Name:    "turn-on",
-								Aliases: []string{"on"},
-								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "input_boolean", "turn_on")
-								},
-							},
-							{
-								Name:    "turn-off",
-								Aliases: []string{"off"},
-								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "input_boolean", "turn_off")
-								},
-							},
-							{
-								Name:    "toggle",
-								Aliases: []string{"t"},
-								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "input_boolean", "toggle")
-								},
-							},
-						},
+						Name:     "input_boolean",
+						Aliases:  []string{"ib"},
+						Commands: createToggleServiceCommands("input_boolean"),
+					},
+					{
+						Name:     "light",
+						Aliases:  []string{"l"},
+						Commands: createToggleServiceCommands("light"),
+					},
+					{
+						Name:     "switch",
+						Aliases:  []string{"s"},
+						Commands: createToggleServiceCommands("switch"),
 					},
 				},
 			},
@@ -76,6 +64,32 @@ func main() {
 	}
 
 	log.Info("------ Exiting ------")
+}
+
+func createToggleServiceCommands(domain string) []*cli.Command {
+	return []*cli.Command{
+		{
+			Name:    "turn-on",
+			Aliases: []string{"on"},
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				return cmdHACallService(cmd, domain, "turn_on")
+			},
+		},
+		{
+			Name:    "turn-off",
+			Aliases: []string{"off"},
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				return cmdHACallService(cmd, domain, "turn_off")
+			},
+		},
+		{
+			Name:    "toggle",
+			Aliases: []string{"t"},
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				return cmdHACallService(cmd, domain, "toggle")
+			},
+		},
+	}
 }
 
 func cmdHACallService(
