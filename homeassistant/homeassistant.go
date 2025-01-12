@@ -1,6 +1,7 @@
 package homeassistant
 
 import (
+	"encoding/json"
 	"net/url"
 	"strings"
 
@@ -25,13 +26,13 @@ type HomeAssistantAuthRequest struct {
 }
 
 type HomeAssistantCallServiceRequest struct {
-  ID             int         `json:"id"`
-  Type           string      `json:"type"`
-  Domain         string      `json:"domain"`
-  Service        string      `json:"service"`
-  ServiceData    interface{} `json:"service_data,omitempty"`
-  Target         interface{} `json:"target,omitempty"`
-  ReturnResponse bool        `json:"return_response,omitempty"`
+	ID             int         `json:"id"`
+	Type           string      `json:"type"`
+	Domain         string      `json:"domain"`
+	Service        string      `json:"service"`
+	ServiceData    interface{} `json:"service_data,omitempty"`
+	Target         interface{} `json:"target,omitempty"`
+	ReturnResponse bool        `json:"return_response,omitempty"`
 }
 
 type HomeAssistantResponse[T any] struct {
@@ -80,13 +81,21 @@ func Connect() *HomeAssistantConn {
 	}
 
 	// 5. Send auth message and read response
-	authResponse := conn.SendRequest(authMessage)
+	authResponse := conn.SendRequest(authMessage, false)
 	log.Infof("Auth response: %v", authResponse)
 
 	return conn
 }
 
-func (conn *HomeAssistantConn) SendRequest(request interface{}) HomeAssistantResponse[any] {
+func (conn *HomeAssistantConn) SendRequest(request interface{}, debug bool) HomeAssistantResponse[any] {
+	if debug {
+		b, err := json.Marshal(request)
+		if err != nil {
+			log.Errorf("Error marshalling request: %v", err)
+		} else {
+			log.Infof("Request: %s", b)
+		}
+	}
 	err := conn.WriteJSON(request)
 	if err != nil {
 		log.Fatalf("Error sending request: %v", err)
