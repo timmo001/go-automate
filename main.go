@@ -85,7 +85,6 @@ func cmdHACallService(
 	return nil
 }
 
-
 func RandomID() int {
 	reader := rand.Reader
 	n, err := rand.Int(reader, big.NewInt(1000))
