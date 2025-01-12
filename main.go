@@ -44,6 +44,20 @@ func main() {
 						Aliases: []string{"ib"},
 						Commands: []*cli.Command{
 							{
+								Name:    "turn-on",
+								Aliases: []string{"on"},
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "input_boolean", "turn_on")
+								},
+							},
+							{
+								Name:    "turn-off",
+								Aliases: []string{"off"},
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "input_boolean", "turn_off")
+								},
+							},
+							{
 								Name:    "toggle",
 								Aliases: []string{"t"},
 								Action: func(ctx context.Context, cmd *cli.Command) error {
