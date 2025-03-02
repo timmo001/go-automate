@@ -120,7 +120,7 @@ func createToggleServiceCommands(domain string) []*cli.Command {
 func cmdHACallService(
 	cmd *cli.Command,
 	domain, service, targetType string,
-	data interface{},
+	data any,
 	returnResponse bool,
 ) error {
 	args := cmd.Args()
