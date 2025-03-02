@@ -11,6 +11,7 @@ import (
 
 	"github.com/timmo001/go-automate/config"
 	"github.com/timmo001/go-automate/homeassistant"
+	"github.com/timmo001/go-automate/notify"
 	"github.com/urfave/cli/v3"
 )
 
@@ -81,6 +82,14 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:    "notify",
+				Aliases: []string{"n"},
+				Usage:   "Send a notification",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					return cmdNotify(cmd)
+				},
+			},
 		},
 	}
 
@@ -147,6 +156,19 @@ func cmdHACallService(
 	log.Infof("Call service response: %v", resp)
 
 	return nil
+}
+
+func cmdNotify(
+	cmd *cli.Command,
+) error {
+	args := cmd.Args()
+	summary := args.Get(0)
+	body := args.Get(1)
+
+	return notify.SendNotification(&notify.Notify{
+		Summary: summary,
+		Body:    &body,
+	})
 }
 
 func RandomID() int {
