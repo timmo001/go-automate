@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	log.Infof("Loaded config: %v", cfg)
+	log.Debugf("Loaded config: %v", cfg)
 
 	cfg, err = cfg.Setup()
 	if err != nil {
@@ -127,12 +127,12 @@ func cmdHACallService(
 	firstArg := args.Get(0)
 	log.Infof("First arg: %s", firstArg)
 
-  var target string
-  if targetType == "entity_id" {
-    target = fmt.Sprintf("%s.%s", domain, firstArg)
-  } else {
-    target = firstArg
-  }
+	var target string
+	if targetType == "entity_id" {
+		target = fmt.Sprintf("%s.%s", domain, firstArg)
+	} else {
+		target = firstArg
+	}
 
 	conn := homeassistant.Connect()
 	resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
