@@ -128,9 +128,10 @@ if git diff --quiet; then
   echo ""
   echo "No changes detected. AUR package is already up to date."
 
-  # Cleanup SSH key if in CI
+  # Cleanup SSH key and temp files if in CI
   if [ "$IS_CI" = "true" ]; then
     rm -f ~/.ssh/aur_rsa
+    rm -f ~/.ssh/config
   fi
 
   exit 0
