@@ -1,0 +1,44 @@
+name: Update AUR Package
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  update-aur:
+    name: Update AUR (go-automate-git)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for version calculation
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Test build
+        run: |
+          echo "Testing build to ensure it compiles..."
+          go build -v .
+
+      - name: Update AUR package
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          # Install makepkg dependencies
+          sudo apt-get update
+          sudo apt-get install -y binutils fakeroot
+
+          # Setup git config
+          git config --global user.name "Go Automate Bot"
+          git config --global user.email "github-actions@timmo001.com"
+
+          # Run the update script
+          bash .scripts/linux/update-aur.sh

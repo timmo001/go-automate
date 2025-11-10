@@ -4,15 +4,59 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-AUR_REPO_PATH="$HOME/repos/aur/go-automate-git"
+AUR_PACKAGE_NAME="go-automate-git"
+AUR_REPO_URL="ssh://aur@aur.archlinux.org/${AUR_PACKAGE_NAME}.git"
 
-echo "Updating go-automate-git AUR package..."
+# Detect if running in CI
+IS_CI="${CI:-false}"
 
-# Check if AUR repository exists
-if [ ! -d "$AUR_REPO_PATH" ]; then
-  echo "Error: AUR repository not found at $AUR_REPO_PATH"
-  echo "Clone it first with: git clone ssh://aur@aur.archlinux.org/go-automate-git.git"
-  exit 1
+echo "Updating $AUR_PACKAGE_NAME AUR package..."
+echo "Running in CI: $IS_CI"
+
+# Setup SSH authentication if running in CI
+if [ "$IS_CI" = "true" ]; then
+  echo "Setting up SSH authentication for AUR..."
+
+  if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+    echo "Error: AUR_SSH_PRIVATE_KEY environment variable not set"
+    exit 1
+  fi
+
+  # Setup SSH
+  mkdir -p ~/.ssh
+  chmod 700 ~/.ssh
+
+  echo "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur_rsa
+  chmod 600 ~/.ssh/aur_rsa
+
+  # Add AUR to known hosts
+  ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+
+  # Configure SSH for AUR
+  cat << EOF > ~/.ssh/config
+Host aur.archlinux.org
+  IdentityFile ~/.ssh/aur_rsa
+  User aur
+  StrictHostKeyChecking accept-new
+EOF
+  chmod 600 ~/.ssh/config
+
+  # Create temporary directory for AUR repo
+  AUR_REPO_PATH="$(mktemp -d)/aur-repo"
+
+  # Clone AUR repository
+  echo "Cloning AUR repository..."
+  git clone "$AUR_REPO_URL" "$AUR_REPO_PATH"
+else
+  # Local mode: use ~/repos/aur location
+  AUR_REPO_PATH="$HOME/repos/aur/$AUR_PACKAGE_NAME"
+
+  # Check if AUR repository exists locally
+  if [ ! -d "$AUR_REPO_PATH" ]; then
+    echo "Error: AUR repository not found at $AUR_REPO_PATH"
+    echo "Clone it first with: git clone $AUR_REPO_URL"
+    exit 1
+  fi
 fi
 
 # Generate version from git
@@ -40,18 +84,58 @@ sed -i "s/^pkgver=.*/pkgver=${PKGVER}/" PKGBUILD
 
 # Generate .SRCINFO
 echo "Generating .SRCINFO..."
-makepkg --printsrcinfo > .SRCINFO
+
+if [ "$IS_CI" = "true" ]; then
+  # In CI, create builduser for makepkg (it refuses to run as root)
+  id -u builduser &>/dev/null || sudo useradd -m builduser
+  sudo chown -R builduser:builduser .
+
+  # Run makepkg as builduser
+  sudo -u builduser bash -c 'cd '"$AUR_REPO_PATH"' && makepkg --printsrcinfo > .SRCINFO'
+else
+  # Local mode: run directly
+  makepkg --printsrcinfo > .SRCINFO
+fi
 
 # Show changes
 echo ""
 echo "Changes:"
 git diff
 
-echo ""
-echo "Ready to commit and push to AUR"
-echo ""
-echo "To commit and push, run:"
-echo "  cd $AUR_REPO_PATH"
-echo "  git add PKGBUILD .SRCINFO"
-echo "  git commit -m 'Update to version $PKGVER'"
-echo "  git push"
+# Check if there are any changes
+if git diff --quiet; then
+  echo ""
+  echo "No changes detected. AUR package is already up to date."
+
+  # Cleanup SSH key if in CI
+  if [ "$IS_CI" = "true" ]; then
+    rm -f ~/.ssh/aur_rsa
+  fi
+
+  exit 0
+fi
+
+# Commit and push changes
+if [ "$IS_CI" = "true" ]; then
+  echo ""
+  echo "Committing and pushing to AUR..."
+
+  git add -f PKGBUILD .SRCINFO
+  git commit -m "Update to version $PKGVER"
+  git push origin master
+
+  echo "Successfully updated AUR package to version $PKGVER"
+
+  # Cleanup SSH key
+  rm -f ~/.ssh/aur_rsa
+  rm -f ~/.ssh/config
+else
+  echo ""
+  echo "Ready to commit and push to AUR"
+  echo ""
+  echo "To commit and push, run:"
+  echo "  cd $AUR_REPO_PATH"
+  echo "  git add PKGBUILD .SRCINFO"
+  echo "  git commit -m 'Update to version $PKGVER'"
+  echo "  git push"
+fi

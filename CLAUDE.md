@@ -92,6 +92,25 @@ Key dependencies:
 - `github.com/charmbracelet/huh` - Interactive forms for setup
 - `github.com/charmbracelet/log` - Structured logging
 
+## Distribution
+
+### AUR Package
+
+The project maintains an AUR (Arch User Repository) package for Arch Linux users:
+
+**Package**: `go-automate-git` - Builds from latest main branch
+
+**Location**: `.scripts/linux/`
+- `PKGBUILD` - AUR package build script
+- `update-aur.sh` - Update script (works locally and in CI)
+- `README.md` - Detailed setup and usage documentation
+
+**Automation**: GitHub Actions automatically updates the AUR package on every push to `main` branch (`.github/workflows/update-aur.yml`).
+
+**Version format**: `<tag>.r<commit_count>.g<hash>` (e.g., `0.1.0.r42.gabc1234`)
+
+See `.scripts/linux/README.md` for setup instructions and troubleshooting.
+
 ## Notes
 
 - The application requires a running Home Assistant instance with WebSocket API enabled
