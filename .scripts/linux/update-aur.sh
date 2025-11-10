@@ -126,8 +126,8 @@ echo ""
 echo "Changes:"
 git diff
 
-# Check if there are any changes
-if git diff --quiet; then
+# Check if there are any changes (including untracked files)
+if ! git status --porcelain | grep -q .; then
   echo ""
   echo "No changes detected. AUR package is already up to date."
 
