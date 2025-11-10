@@ -15,6 +15,9 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+// Version is the version of the application, set at build time via ldflags
+var Version = "dev"
+
 func main() {
 	log.Info("------ Go Automate ------")
 
@@ -32,8 +35,9 @@ func main() {
 	homeassistant.Config = &cfg.HomeAssistant
 
 	cmd := &cli.Command{
-		Name:  "Go Automate",
-		Usage: "Run common tasks",
+		Name:    "Go Automate",
+		Usage:   "Run common tasks",
+		Version: Version,
 		Commands: []*cli.Command{
 			{
 				Name:    "home-assistant",
