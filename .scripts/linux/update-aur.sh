@@ -56,12 +56,21 @@ EOF
     echo "Attempting to clone anyway..."
   fi
 
-  # Create temporary directory for AUR repo
-  AUR_REPO_PATH="$(mktemp -d)/aur-repo"
+  # Create temporary directory and clone AUR repo
+  TEMP_DIR=$(mktemp -d)
+  cd "$TEMP_DIR"
 
-  # Clone AUR repository
   echo "Cloning AUR repository..."
-  git clone "$AUR_REPO_URL" "$AUR_REPO_PATH"
+  git clone "$AUR_REPO_URL" aur-repo
+  cd aur-repo
+
+  # Configure Git to allow operations on this repository
+  git config --global --add safe.directory "$(pwd)"
+
+  # Ensure parent directory is accessible (for Arch container)
+  chmod 755 "$TEMP_DIR"
+
+  AUR_REPO_PATH="$(pwd)"
 else
   # Local mode: use ~/repos/aur location
   AUR_REPO_PATH="$HOME/repos/aur/$AUR_PACKAGE_NAME"
@@ -72,6 +81,8 @@ else
     echo "Clone it first with: git clone $AUR_REPO_URL"
     exit 1
   fi
+
+  cd "$AUR_REPO_PATH"
 fi
 
 # Generate version from git
@@ -90,31 +101,23 @@ PKGVER="${PREFIX_VERSION}.r${REV_COUNT}.g${SHORT_HASH}"
 
 echo "Generated version: $PKGVER"
 
-# Copy PKGBUILD to AUR repository
-cp "$SCRIPT_DIR/PKGBUILD" "$AUR_REPO_PATH/PKGBUILD"
-
-# Update pkgver in PKGBUILD
+# Copy PKGBUILD to AUR repository and update version
 cd "$AUR_REPO_PATH"
+cp "$SCRIPT_DIR/PKGBUILD" PKGBUILD
 sed -i "s/^pkgver=.*/pkgver=${PKGVER}/" PKGBUILD
+
+# Create build directory
+echo "Creating build directory..."
+export BUILDDIR="/tmp/makepkg-build"
+mkdir -p "$BUILDDIR"
 
 # Generate .SRCINFO
 echo "Generating .SRCINFO..."
-
 if [ "$IS_CI" = "true" ]; then
-  # In CI with Arch container, script should already be running as builduser
-  # Just set up the build directory
-  export BUILDDIR="/tmp/makepkg-build"
-  mkdir -p "$BUILDDIR"
-
-  # Ensure we can access the working directory
-  chmod 755 "$(dirname "$AUR_REPO_PATH")"
-
-  # Run makepkg
-  cd "$AUR_REPO_PATH"
-  makepkg --printsrcinfo > .SRCINFO
+  # In CI: run makepkg in clean environment (matches system-bridge pattern)
+  env -i HOME="$HOME" BUILDDIR="$BUILDDIR" bash --noprofile --norc -c 'makepkg --printsrcinfo > .SRCINFO'
 else
   # Local mode: run directly
-  cd "$AUR_REPO_PATH"
   makepkg --printsrcinfo > .SRCINFO
 fi
 
@@ -128,8 +131,11 @@ if git diff --quiet; then
   echo ""
   echo "No changes detected. AUR package is already up to date."
 
-  # Cleanup SSH key and temp files if in CI
+  # Cleanup temp files if in CI
   if [ "$IS_CI" = "true" ]; then
+    cd /
+    rm -rf "$TEMP_DIR"
+    rm -rf "$BUILDDIR"
     rm -f ~/.ssh/aur_rsa
     rm -f ~/.ssh/config
   fi
@@ -143,12 +149,20 @@ if [ "$IS_CI" = "true" ]; then
   echo "Committing and pushing to AUR..."
 
   git add -f PKGBUILD .SRCINFO
-  git commit -m "Update to version $PKGVER"
+  git commit -m "Update to version $PKGVER
+
+Automated update from GitHub Actions
+Commit: ${GITHUB_SHA}
+"
   git push origin master
 
   echo "Successfully updated AUR package to version $PKGVER"
 
-  # Cleanup SSH key
+  # Cleanup
+  echo "Cleaning up temporary files..."
+  cd /
+  rm -rf "$TEMP_DIR"
+  rm -rf "$BUILDDIR"
   rm -f ~/.ssh/aur_rsa
   rm -f ~/.ssh/config
 else
