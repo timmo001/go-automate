@@ -26,20 +26,35 @@ if [ "$IS_CI" = "true" ]; then
   mkdir -p ~/.ssh
   chmod 700 ~/.ssh
 
-  echo "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur_rsa
+  # Write SSH key (use printf to preserve newlines)
+  printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur_rsa
   chmod 600 ~/.ssh/aur_rsa
+
+  # Verify key was written correctly
+  if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/aur_rsa; then
+    echo "Error: SSH key format appears invalid"
+    echo "Key should start with '-----BEGIN OPENSSH PRIVATE KEY-----' or similar"
+    exit 1
+  fi
 
   # Add AUR to known hosts
   ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
 
   # Configure SSH for AUR
-  cat << EOF > ~/.ssh/config
+  cat << 'EOF' > ~/.ssh/config
 Host aur.archlinux.org
   IdentityFile ~/.ssh/aur_rsa
   User aur
   StrictHostKeyChecking accept-new
 EOF
   chmod 600 ~/.ssh/config
+
+  # Test SSH connection
+  echo "Testing SSH connection to AUR..."
+  if ! ssh -T aur@aur.archlinux.org 2>&1 | grep -q "successfully authenticated"; then
+    echo "Warning: SSH authentication test did not return expected response"
+    echo "Attempting to clone anyway..."
+  fi
 
   # Create temporary directory for AUR repo
   AUR_REPO_PATH="$(mktemp -d)/aur-repo"
