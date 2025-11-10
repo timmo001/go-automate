@@ -103,7 +103,10 @@ echo "Generating .SRCINFO..."
 if [ "$IS_CI" = "true" ]; then
   # In CI, create builduser for makepkg (it refuses to run as root)
   id -u builduser &>/dev/null || sudo useradd -m builduser
-  sudo chown -R builduser:builduser .
+
+  # Ensure builduser can access the working directory and all parent directories
+  sudo chmod 755 "$(dirname "$AUR_REPO_PATH")"
+  sudo chown -R builduser:builduser "$AUR_REPO_PATH"
 
   # Run makepkg as builduser
   sudo -u builduser bash -c 'cd '"$AUR_REPO_PATH"' && makepkg --printsrcinfo > .SRCINFO'
