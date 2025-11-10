@@ -101,17 +101,20 @@ sed -i "s/^pkgver=.*/pkgver=${PKGVER}/" PKGBUILD
 echo "Generating .SRCINFO..."
 
 if [ "$IS_CI" = "true" ]; then
-  # In CI, create builduser for makepkg (it refuses to run as root)
-  id -u builduser &>/dev/null || sudo useradd -m builduser
+  # In CI with Arch container, script should already be running as builduser
+  # Just set up the build directory
+  export BUILDDIR="/tmp/makepkg-build"
+  mkdir -p "$BUILDDIR"
 
-  # Ensure builduser can access the working directory and all parent directories
-  sudo chmod 755 "$(dirname "$AUR_REPO_PATH")"
-  sudo chown -R builduser:builduser "$AUR_REPO_PATH"
+  # Ensure we can access the working directory
+  chmod 755 "$(dirname "$AUR_REPO_PATH")"
 
-  # Run makepkg as builduser
-  sudo -u builduser bash -c 'cd '"$AUR_REPO_PATH"' && makepkg --printsrcinfo > .SRCINFO'
+  # Run makepkg
+  cd "$AUR_REPO_PATH"
+  makepkg --printsrcinfo > .SRCINFO
 else
   # Local mode: run directly
+  cd "$AUR_REPO_PATH"
   makepkg --printsrcinfo > .SRCINFO
 fi
 

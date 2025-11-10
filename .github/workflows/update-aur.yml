@@ -10,6 +10,8 @@ jobs:
   update-aur:
     name: Update AUR (go-automate-git)
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/timmo001/system-bridge/ci-build-arch:latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -31,14 +33,21 @@ jobs:
       - name: Update AUR package
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
-          # Install makepkg dependencies
-          sudo apt-get update
-          sudo apt-get install -y binutils fakeroot
-
           # Setup git config
           git config --global user.name "Go Automate Bot"
           git config --global user.email "github-actions@timmo001.com"
 
           # Run the update script
-          bash .scripts/linux/update-aur.sh
+          chmod +x .scripts/linux/update-aur.sh
+
+          # If running as root and builduser exists, switch to builduser
+          if [ "$(id -u)" -eq 0 ] && id -u builduser >/dev/null 2>&1; then
+            echo "Running as root, switching to builduser..."
+            chown -R builduser:builduser "$(pwd)"
+            exec sudo --preserve-env=AUR_SSH_PRIVATE_KEY,GITHUB_SHA,GITHUB_WORKSPACE -u builduser -H bash ./.scripts/linux/update-aur.sh
+          fi
+
+          .scripts/linux/update-aur.sh
