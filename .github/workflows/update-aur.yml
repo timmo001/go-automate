@@ -28,6 +28,10 @@ jobs:
       - name: Test build
         run: |
           echo "Testing build to ensure it compiles..."
+
+          # Fix git ownership for VCS stamping in container
+          git config --global --add safe.directory "$(pwd)"
+
           go build -v .
 
       - name: Update AUR package
