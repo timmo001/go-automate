@@ -13,6 +13,11 @@ IS_CI="${CI:-false}"
 echo "Updating $AUR_PACKAGE_NAME AUR package..."
 echo "Running in CI: $IS_CI"
 
+# Setup git config
+echo "Setting up git config..."
+git config --global user.name "Go Automate Bot"
+git config --global user.email "github-actions@timmo001.com"
+
 # Setup SSH authentication if running in CI
 if [ "$IS_CI" = "true" ]; then
   echo "Setting up SSH authentication for AUR..."

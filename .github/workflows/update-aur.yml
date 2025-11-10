@@ -40,10 +40,6 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
-          # Setup git config
-          git config --global user.name "Go Automate Bot"
-          git config --global user.email "github-actions@timmo001.com"
-
           # Run the update script
           chmod +x .scripts/linux/update-aur.sh
 
