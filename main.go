@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
+	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/charmbracelet/log"
@@ -44,6 +43,51 @@ func main() {
 				Aliases: []string{"ha"},
 				Usage:   "Interact with Home Assistant",
 				Commands: []*cli.Command{
+					{
+						Name:    "watch",
+						Aliases: []string{"w"},
+						Usage:   "Watch Home Assistant entities for state changes",
+						Commands: []*cli.Command{
+							{
+								Name:      "entity",
+								Aliases:   []string{"e"},
+								ArgsUsage: "<entity_id>",
+								Flags: []cli.Flag{
+									&cli.BoolFlag{
+										Name:  "waybar",
+										Usage: "Output JSON lines for Waybar",
+									},
+									&cli.StringFlag{
+										Name:  "icon",
+										Usage: "Icon to render for on/off states in Waybar mode",
+									},
+									&cli.StringFlag{
+										Name:  "tooltip-on",
+										Usage: "Tooltip when the state is on in Waybar mode",
+									},
+									&cli.StringFlag{
+										Name:  "tooltip-off",
+										Usage: "Tooltip when the state is not on in Waybar mode",
+									},
+									&cli.StringFlag{
+										Name:  "class-on",
+										Usage: "CSS class when the state is on in Waybar mode",
+									},
+									&cli.StringFlag{
+										Name:  "class-off",
+										Usage: "CSS class when the state is not on in Waybar mode",
+									},
+									&cli.BoolFlag{
+										Name:  "hide-off",
+										Usage: "Hide the Waybar module when the state is not on",
+									},
+								},
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHAWatchEntity(cmd)
+								},
+							},
+						},
+					},
 					{
 						Name:    "assist_satellite",
 						Aliases: []string{"as"},
@@ -149,7 +193,7 @@ func cmdHACallService(
 
 	conn := homeassistant.Connect()
 	resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
-		ID:             RandomID(),
+		ID:             homeassistant.RandomID(),
 		Type:           "call_service",
 		Domain:         domain,
 		Service:        service,
@@ -175,11 +219,110 @@ func cmdNotify(
 	})
 }
 
-func RandomID() int {
-	reader := rand.Reader
-	n, err := rand.Int(reader, big.NewInt(1000))
-	if err != nil {
-		log.Fatalf("error generating random ID: %v", err)
+func cmdHAWatchEntity(cmd *cli.Command) error {
+	args := cmd.Args()
+	entityID := args.Get(0)
+	if entityID == "" {
+		return fmt.Errorf("entity_id is required")
 	}
-	return int(n.Int64())
+
+	options := entityWatchOutputOptions{
+		Waybar:     cmd.Bool("waybar"),
+		Icon:       cmd.String("icon"),
+		TooltipOn:  cmd.String("tooltip-on"),
+		TooltipOff: cmd.String("tooltip-off"),
+		ClassOn:    cmd.String("class-on"),
+		ClassOff:   cmd.String("class-off"),
+		HideOff:    cmd.Bool("hide-off"),
+	}
+
+	conn := homeassistant.Connect()
+
+	initialState := conn.GetState(entityID)
+	if initialState != nil {
+		printEntityState(initialState, options)
+	}
+
+	resp := conn.SubscribeEvents("state_changed")
+	if !resp.Success {
+		return fmt.Errorf("subscribe failed: %s", resp.Error.Message)
+	}
+
+	for {
+		event := conn.ReadEvent()
+		if event.Type != "event" || event.Event.EventType != "state_changed" {
+			continue
+		}
+
+		if event.Event.Data.EntityID != entityID || event.Event.Data.NewState == nil {
+			continue
+		}
+
+		printEntityState(event.Event.Data.NewState, options)
+	}
+}
+
+type entityWatchOutputOptions struct {
+	Waybar     bool
+	Icon       string
+	TooltipOn  string
+	TooltipOff string
+	ClassOn    string
+	ClassOff   string
+	HideOff    bool
+}
+
+func printEntityState(state *homeassistant.HomeAssistantState, options entityWatchOutputOptions) {
+	if options.Waybar {
+		text := state.State
+		tooltip := state.State
+		className := state.State
+
+		if state.State == "on" {
+			if options.Icon != "" {
+				text = options.Icon
+			}
+			if options.TooltipOn != "" {
+				tooltip = options.TooltipOn
+			}
+			if options.ClassOn != "" {
+				className = options.ClassOn
+			}
+		} else {
+			if options.HideOff {
+				text = ""
+			} else if options.Icon != "" {
+				text = options.Icon
+			} else if options.Icon == "" {
+				text = state.State
+			}
+			if options.TooltipOff != "" {
+				tooltip = options.TooltipOff
+			}
+			if options.ClassOff != "" {
+				className = options.ClassOff
+			}
+			if options.HideOff {
+				if className == "" {
+					className = "hidden"
+				} else {
+					className += " hidden"
+				}
+			}
+		}
+
+		payload, err := json.Marshal(map[string]string{
+			"text":    text,
+			"tooltip": tooltip,
+			"class":   className,
+		})
+		if err != nil {
+			log.Fatalf("error marshalling waybar payload: %v", err)
+		}
+
+		fmt.Println(string(payload))
+		return
+	}
+
+	fmt.Println(state.State)
 }

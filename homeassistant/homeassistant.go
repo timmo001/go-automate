@@ -3,7 +3,7 @@ package homeassistant
 import (
 	"encoding/json"
 	"net/url"
-	"strings"
+	"sync/atomic"
 
 	"github.com/timmo001/go-automate/config"
 
@@ -25,6 +25,12 @@ type HomeAssistantAuthRequest struct {
 	AccessToken string `json:"access_token"`
 }
 
+type HomeAssistantSubscribeEventsRequest struct {
+	ID        int    `json:"id"`
+	Type      string `json:"type"`
+	EventType string `json:"event_type,omitempty"`
+}
+
 type HomeAssistantCallServiceRequest struct {
 	ID             int         `json:"id"`
 	Type           string      `json:"type"`
@@ -33,6 +39,24 @@ type HomeAssistantCallServiceRequest struct {
 	ServiceData    interface{} `json:"service_data,omitempty"`
 	Target         interface{} `json:"target,omitempty"`
 	ReturnResponse bool        `json:"return_response,omitempty"`
+}
+
+type HomeAssistantState struct {
+	EntityID string `json:"entity_id"`
+	State    string `json:"state"`
+}
+
+type HomeAssistantEventMessage struct {
+	ID    int    `json:"id"`
+	Type  string `json:"type"`
+	Event struct {
+		EventType string `json:"event_type"`
+		Data      struct {
+			EntityID string              `json:"entity_id"`
+			OldState *HomeAssistantState `json:"old_state"`
+			NewState *HomeAssistantState `json:"new_state"`
+		} `json:"data"`
+	} `json:"event"`
 }
 
 type HomeAssistantResponse[T any] struct {
@@ -48,14 +72,22 @@ type HomeAssistantResponse[T any] struct {
 }
 
 var (
-	Config *config.ConfigHomeAssistant
+	Config        *config.ConfigHomeAssistant
+	requestIDSeed atomic.Int64
 )
 
 func Connect() *HomeAssistantConn {
-	// 1. Setup WebSocket URL
-	host := strings.Split(Config.URL, "/")[2]
+	parsedURL, err := url.Parse(Config.URL)
+	if err != nil {
+		log.Fatalf("Error parsing Home Assistant URL: %v", err)
+	}
 
-	wsUrl := url.URL{Scheme: "ws", Host: host, Path: "/api/websocket"}
+	wsScheme := "ws"
+	if parsedURL.Scheme == "https" || parsedURL.Scheme == "wss" {
+		wsScheme = "wss"
+	}
+
+	wsUrl := url.URL{Scheme: wsScheme, Host: parsedURL.Host, Path: "/api/websocket"}
 	log.Infof("Connecting to Home Assistant at: %s", wsUrl.String())
 
 	// 2. Connect to WebSocket
@@ -87,6 +119,10 @@ func Connect() *HomeAssistantConn {
 	return conn
 }
 
+func RandomID() int {
+	return int(requestIDSeed.Add(1))
+}
+
 func (conn *HomeAssistantConn) SendRequest(request interface{}, debug bool) HomeAssistantResponse[any] {
 	if debug {
 		b, err := json.Marshal(request)
@@ -108,4 +144,55 @@ func (conn *HomeAssistantConn) SendRequest(request interface{}, debug bool) Home
 	}
 
 	return response
+}
+
+func (conn *HomeAssistantConn) GetState(entityID string) *HomeAssistantState {
+	request := HomeAssistantRequest{
+		ID:   RandomID(),
+		Type: "get_states",
+	}
+
+	b, err := json.Marshal(request)
+	if err != nil {
+		log.Fatalf("Error marshalling get_states request: %v", err)
+	}
+	log.Infof("Request: %s", b)
+
+	err = conn.WriteJSON(request)
+	if err != nil {
+		log.Fatalf("Error sending get_states request: %v", err)
+	}
+
+	var response HomeAssistantResponse[[]HomeAssistantState]
+	err = conn.ReadJSON(&response)
+	if err != nil {
+		log.Fatalf("Error reading get_states response: %v", err)
+	}
+
+	for _, state := range response.Result {
+		if state.EntityID == entityID {
+			state := state
+			return &state
+		}
+	}
+
+	return nil
+}
+
+func (conn *HomeAssistantConn) SubscribeEvents(eventType string) HomeAssistantResponse[any] {
+	return conn.SendRequest(HomeAssistantSubscribeEventsRequest{
+		ID:        RandomID(),
+		Type:      "subscribe_events",
+		EventType: eventType,
+	}, true)
+}
+
+func (conn *HomeAssistantConn) ReadEvent() HomeAssistantEventMessage {
+	var event HomeAssistantEventMessage
+	err := conn.ReadJSON(&event)
+	if err != nil {
+		log.Fatalf("Error reading event: %v", err)
+	}
+
+	return event
 }
