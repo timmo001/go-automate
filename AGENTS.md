@@ -2,7 +2,8 @@
 
 ## Build & Test Commands
 - Build: `go build`
-- Install: `go install`
+- Package (Arch): `make create_arch`
+- Install (Arch): `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
 - Run: `go run main.go [command]`
 - Format: `go fmt ./...`
 - Update deps: `go mod tidy`

@@ -4,3 +4,5 @@
 # Builds
 go-automate
 go-automate.*
+build/
+dist/

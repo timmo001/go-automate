@@ -1,0 +1,27 @@
+#!/bin/sh
+# PKGBUILD for go-automate (binary) package
+
+pkgname=go-automate
+pkgver=${ARCH_PKGVER}
+pkgrel=1
+pkgdesc="CLI utility to trigger Home Assistant automations via keyboard shortcuts"
+source=('go-automate' 'LICENSE')
+arch=('x86_64')
+
+url="https://github.com/timmo001/go-automate"
+license=('Apache-2.0')
+keywords=('home-assistant' 'automation' 'cli' 'keyboard-shortcuts')
+depends=('libnotify')
+provides=('go-automate')
+conflicts=('go-automate-git')
+replaces=('go-automate-git')
+
+build() {
+  # No-op: we package a prebuilt binary provided via source=("go-automate" ...)
+  :
+}
+
+package() {
+  install -Dm755 go-automate "$pkgdir/usr/bin/go-automate"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

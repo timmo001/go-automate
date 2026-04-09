@@ -6,16 +6,15 @@ I call this app with keyboard shortcuts and patched apps in linux to trigger aut
 
 ## Setup
 
-1. Install go
-1. Set up your go workspace and make sure that your `GOPATH` is set correctly.
+1. Install Go
+1. Install Arch packaging tools if you plan to build a local package (`base-devel`, `yay`)
 
-```zsh
-export GOPATH=$HOME/go
-export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-```
-
-## Build and Install
+## Build
 
 1. Clone this repo
 1. Run `go build`
-1. Run `go install`
+
+## Arch Package
+
+1. Run `make create_arch`
+1. Install the generated package with `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
