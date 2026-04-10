@@ -49,13 +49,16 @@ func main() {
 					{
 						Name:    "watch",
 						Aliases: []string{"w"},
-						Usage:   "Watch Home Assistant entities for state changes",
+						Usage:   "Watch Home Assistant entities for state changes (prefer bridge watch)",
+						Description: "For repeated or long-running watchers, prefer `go-automate ha bridge watch entity` to reduce " +
+							"network and websocket load. Use `--direct` only for explicit troubleshooting.",
 						Commands: []*cli.Command{
 							{
-								Name:      "entity",
-								Aliases:   []string{"e"},
-								ArgsUsage: "<entity_id>",
-								Flags:     createEntityWatchFlags(true),
+								Name:        "entity",
+								Aliases:     []string{"e"},
+								ArgsUsage:   "<entity_id>",
+								Description: "If the bridge is available, this command uses it by default. Add `--waybar` for machine-readable JSON output.",
+								Flags:       createEntityWatchFlags(true),
 								Action: func(ctx context.Context, cmd *cli.Command) error {
 									return cmdHAWatchEntity(ctx, cmd)
 								},
@@ -83,13 +86,16 @@ func main() {
 							{
 								Name:    "watch",
 								Aliases: []string{"w"},
-								Usage:   "Watch entities through the local Home Assistant bridge",
+								Usage:   "Watch entities through the local Home Assistant bridge (recommended)",
+								Description: "Recommended watch mode for automation and status bars because it reuses a shared " +
+									"Home Assistant bridge connection.",
 								Commands: []*cli.Command{
 									{
-										Name:      "entity",
-										Aliases:   []string{"e"},
-										ArgsUsage: "<entity_id>",
-										Flags:     createEntityWatchFlags(false, &cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
+										Name:        "entity",
+										Aliases:     []string{"e"},
+										ArgsUsage:   "<entity_id>",
+										Description: "Bridge-backed watcher. Use `--waybar` for stable JSON output for downstream commands.",
+										Flags:       createEntityWatchFlags(false, &cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
 										Action: func(ctx context.Context, cmd *cli.Command) error {
 											return cmdHABridgeWatchEntity(ctx, cmd)
 										},
@@ -192,7 +198,7 @@ func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []c
 	flags := []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "waybar",
-			Usage: "Output JSON lines for Waybar",
+			Usage: "Output machine-readable JSON lines for Waybar (recommended for script consumers)",
 		},
 		&cli.StringFlag{
 			Name:  "icon",
@@ -232,7 +238,7 @@ func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []c
 		flags = append(flags,
 			&cli.BoolFlag{
 				Name:  "direct",
-				Usage: "Bypass the local Home Assistant bridge and connect to Home Assistant directly",
+				Usage: "Bypass the local Home Assistant bridge and connect directly (not recommended; higher network usage)",
 			},
 			&cli.StringFlag{
 				Name:  "bridge-socket",
@@ -312,17 +318,24 @@ func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
 		ClassOff:   cmd.String("class-off"),
 		HideOff:    cmd.Bool("hide-off"),
 	}
+	warnIfPlainWatchOutput(options)
 
 	socketPath, err := resolveBridgeSocketPath(cmd.String("bridge-socket"))
 	if err != nil {
 		return err
 	}
 
+	if cmd.Bool("direct") {
+		log.Warn("Direct watch mode enabled. Prefer `go-automate ha bridge watch entity` to reduce network usage.")
+		return watchEntityDirect(entityID, options)
+	}
+
 	if !cmd.Bool("direct") {
 		if err := watchEntityViaBridge(ctx, socketPath, entityID, options); err == nil {
 			return nil
 		} else {
-			log.Debugf("Could not use Home Assistant bridge at %s, falling back to direct websocket: %v", socketPath, err)
+			log.Warnf("Could not use Home Assistant bridge at %s, falling back to direct websocket: %v", socketPath, err)
+			log.Warn("Fallback to direct watch increases network usage. Start the bridge with `go-automate ha bridge serve`.")
 		}
 	}
 
@@ -364,6 +377,7 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 		ClassOff:   cmd.String("class-off"),
 		HideOff:    cmd.Bool("hide-off"),
 	}
+	warnIfPlainWatchOutput(options)
 
 	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
 	if err != nil {
@@ -371,6 +385,14 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return watchEntityViaBridge(ctx, socketPath, entityID, options)
+}
+
+func warnIfPlainWatchOutput(options entityWatchOutputOptions) {
+	if options.Waybar {
+		return
+	}
+
+	log.Warn("Watch output is plain text without --waybar. Use --waybar for stable JSON output in scripts and bars.")
 }
 
 func resolveBridgeSocketPath(socketPath string) (string, error) {
