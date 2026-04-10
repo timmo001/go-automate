@@ -109,6 +109,7 @@ echo "Generated version: $PKGVER"
 # Copy PKGBUILD to AUR repository and update version
 cd "$AUR_REPO_PATH"
 cp "$SCRIPT_DIR/PKGBUILD" PKGBUILD
+cp "$SCRIPT_DIR/arch-package.install" arch-package.install
 sed -i "s/^pkgver=.*/pkgver=${PKGVER}/" PKGBUILD
 
 # Create build directory
