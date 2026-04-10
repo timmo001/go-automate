@@ -19,6 +19,29 @@ type Config struct {
 	HomeAssistant ConfigHomeAssistant `mapstructure:"homeassistant"`
 }
 
+func configDirPath() (string, error) {
+	if os.Getenv("XDG_CONFIG_HOME") != "" {
+		return os.Getenv("XDG_CONFIG_HOME") + "/go-automate", nil
+	}
+	if os.Getenv("APPDATA") != "" {
+		return os.Getenv("APPDATA") + "/go-automate", nil
+	}
+	if os.Getenv("HOME") != "" {
+		return os.Getenv("HOME") + "/.config/go-automate", nil
+	}
+
+	return "", fmt.Errorf("could not determine config path")
+}
+
+func configFilePath() (string, error) {
+	dir, err := configDirPath()
+	if err != nil {
+		return "", err
+	}
+
+	return dir + "/config.yml", nil
+}
+
 func Load() (*Config, error) {
 	viper.AutomaticEnv()
 
@@ -26,15 +49,9 @@ func Load() (*Config, error) {
 	viper.SetConfigType("yaml")
 
 	// (Cross platform) default config configDirPath (~/.config/go-automate or %APPDATA%\go-automate)
-	configDirPath := ""
-	if os.Getenv("XDG_CONFIG_HOME") != "" {
-		configDirPath = os.Getenv("XDG_CONFIG_HOME") + "/go-automate"
-	} else if os.Getenv("APPDATA") != "" {
-		configDirPath = os.Getenv("APPDATA") + "/go-automate"
-	} else if os.Getenv("HOME") != "" {
-		configDirPath = os.Getenv("HOME") + "/.config/go-automate"
-	} else {
-		return nil, fmt.Errorf("Could not determine config path")
+	configDirPath, err := configDirPath()
+	if err != nil {
+		return nil, err
 	}
 
 	// Create the config directory if it doesn't exist
@@ -43,12 +60,15 @@ func Load() (*Config, error) {
 	viper.AddConfigPath(configDirPath)
 
 	// Set default values
-	viper.SetDefault("homeassistant.url", "http://homeassisant.local:8123")
+	viper.SetDefault("homeassistant.url", "http://homeassistant.local:8123")
 	viper.SetDefault("homeassistant.token", "")
 
 	// Read the config file
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if !errors.As(err, &configFileNotFoundError) {
+			return nil, fmt.Errorf("error reading config file: %w", err)
+		}
 	}
 
 	var cfg Config
@@ -69,8 +89,20 @@ func (cfg *Config) Save() error {
 	return nil
 }
 
-func (cfg *Config) Setup() (*Config, error) {
+func (cfg *Config) Setup(interactive bool) (*Config, error) {
 	if cfg.HomeAssistant.Token == "" {
+		if !interactive {
+			path := viper.ConfigFileUsed()
+			if path == "" {
+				path, _ = configFilePath()
+			}
+
+			return nil, fmt.Errorf(
+				"home assistant token is not configured; configure %s or run go-automate in an interactive terminal once",
+				path,
+			)
+		}
+
 		log.Info("------ Setup ------")
 
 		form := huh.NewForm(

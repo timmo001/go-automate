@@ -1,0 +1,15 @@
+[Unit]
+Description=Go Automate Home Assistant bridge
+Documentation=https://github.com/timmo001/go-automate
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=XDG_RUNTIME_DIR=%t
+ExecStart=/usr/bin/go-automate ha bridge serve
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/charmbracelet/log"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/timmo001/go-automate/homeassistant"
 	"github.com/timmo001/go-automate/notify"
 	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
 )
 
 // Version is the version of the application, set at build time via ldflags
@@ -27,7 +30,7 @@ func main() {
 
 	log.Debugf("Loaded config: %v", cfg)
 
-	cfg, err = cfg.Setup()
+	cfg, err = cfg.Setup(isInteractiveSession())
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -52,46 +55,45 @@ func main() {
 								Name:      "entity",
 								Aliases:   []string{"e"},
 								ArgsUsage: "<entity_id>",
+								Flags:     createEntityWatchFlags(true),
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHAWatchEntity(ctx, cmd)
+								},
+							},
+						},
+					},
+					{
+						Name:    "bridge",
+						Aliases: []string{"b"},
+						Usage:   "Run and query the local Home Assistant bridge",
+						Commands: []*cli.Command{
+							{
+								Name:  "serve",
+								Usage: "Serve a shared Home Assistant websocket bridge",
 								Flags: []cli.Flag{
-									&cli.BoolFlag{
-										Name:  "waybar",
-										Usage: "Output JSON lines for Waybar",
-									},
 									&cli.StringFlag{
-										Name:  "icon",
-										Usage: "Icon to render for on/off states in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "text-on",
-										Usage: "Text to render when the state is on in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "text-off",
-										Usage: "Text to render when the state is not on in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "tooltip-on",
-										Usage: "Tooltip when the state is on in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "tooltip-off",
-										Usage: "Tooltip when the state is not on in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "class-on",
-										Usage: "CSS class when the state is on in Waybar mode",
-									},
-									&cli.StringFlag{
-										Name:  "class-off",
-										Usage: "CSS class when the state is not on in Waybar mode",
-									},
-									&cli.BoolFlag{
-										Name:  "hide-off",
-										Usage: "Hide the Waybar module when the state is not on",
+										Name:  "socket",
+										Usage: "Path to the Home Assistant bridge socket",
 									},
 								},
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHAWatchEntity(cmd)
+									return cmdHABridgeServe(ctx, cmd)
+								},
+							},
+							{
+								Name:    "watch",
+								Aliases: []string{"w"},
+								Usage:   "Watch entities through the local Home Assistant bridge",
+								Commands: []*cli.Command{
+									{
+										Name:      "entity",
+										Aliases:   []string{"e"},
+										ArgsUsage: "<entity_id>",
+										Flags:     createEntityWatchFlags(false, &cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
+										Action: func(ctx context.Context, cmd *cli.Command) error {
+											return cmdHABridgeWatchEntity(ctx, cmd)
+										},
+									},
 								},
 							},
 						},
@@ -156,6 +158,10 @@ func main() {
 	log.Info("------ Exiting ------")
 }
 
+func isInteractiveSession() bool {
+	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+}
+
 func createToggleServiceCommands(domain string) []*cli.Command {
 	return []*cli.Command{
 		{
@@ -182,6 +188,64 @@ func createToggleServiceCommands(domain string) []*cli.Command {
 	}
 }
 
+func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []cli.Flag {
+	flags := []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "waybar",
+			Usage: "Output JSON lines for Waybar",
+		},
+		&cli.StringFlag{
+			Name:  "icon",
+			Usage: "Icon to render for on/off states in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "text-on",
+			Usage: "Text to render when the state is on in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "text-off",
+			Usage: "Text to render when the state is not on in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "tooltip-on",
+			Usage: "Tooltip when the state is on in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "tooltip-off",
+			Usage: "Tooltip when the state is not on in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "class-on",
+			Usage: "CSS class when the state is on in Waybar mode",
+		},
+		&cli.StringFlag{
+			Name:  "class-off",
+			Usage: "CSS class when the state is not on in Waybar mode",
+		},
+		&cli.BoolFlag{
+			Name:  "hide-off",
+			Usage: "Hide the Waybar module when the state is not on",
+		},
+	}
+
+	if includeDirectFlags {
+		flags = append(flags,
+			&cli.BoolFlag{
+				Name:  "direct",
+				Usage: "Bypass the local Home Assistant bridge and connect to Home Assistant directly",
+			},
+			&cli.StringFlag{
+				Name:  "bridge-socket",
+				Usage: "Path to the Home Assistant bridge socket",
+			},
+		)
+	}
+
+	flags = append(flags, extraFlags...)
+
+	return flags
+}
+
 func cmdHACallService(
 	cmd *cli.Command,
 	domain, service, targetType string,
@@ -200,7 +264,7 @@ func cmdHACallService(
 	}
 
 	conn := homeassistant.Connect()
-	resp := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
+	resp, err := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
 		ID:             homeassistant.RandomID(),
 		Type:           "call_service",
 		Domain:         domain,
@@ -209,6 +273,9 @@ func cmdHACallService(
 		Target:         map[string]string{targetType: target},
 		ReturnResponse: returnResponse,
 	}, true)
+	if err != nil {
+		return err
+	}
 	log.Infof("Call service response: %v", resp)
 
 	return nil
@@ -227,7 +294,7 @@ func cmdNotify(
 	})
 }
 
-func cmdHAWatchEntity(cmd *cli.Command) error {
+func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	args := cmd.Args()
 	entityID := args.Get(0)
 	if entityID == "" {
@@ -246,20 +313,111 @@ func cmdHAWatchEntity(cmd *cli.Command) error {
 		HideOff:    cmd.Bool("hide-off"),
 	}
 
-	conn := homeassistant.Connect()
+	socketPath, err := resolveBridgeSocketPath(cmd.String("bridge-socket"))
+	if err != nil {
+		return err
+	}
 
-	initialState := conn.GetState(entityID)
+	if !cmd.Bool("direct") {
+		if err := watchEntityViaBridge(ctx, socketPath, entityID, options); err == nil {
+			return nil
+		} else {
+			log.Debugf("Could not use Home Assistant bridge at %s, falling back to direct websocket: %v", socketPath, err)
+		}
+	}
+
+	return watchEntityDirect(entityID, options)
+}
+
+func cmdHABridgeServe(ctx context.Context, cmd *cli.Command) error {
+	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
+	if err != nil {
+		return err
+	}
+
+	serveCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	bridge, err := homeassistant.NewBridge(homeassistant.Config, socketPath)
+	if err != nil {
+		return err
+	}
+
+	return bridge.Serve(serveCtx)
+}
+
+func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
+	args := cmd.Args()
+	entityID := args.Get(0)
+	if entityID == "" {
+		return fmt.Errorf("entity_id is required")
+	}
+
+	options := entityWatchOutputOptions{
+		Waybar:     cmd.Bool("waybar"),
+		Icon:       cmd.String("icon"),
+		TextOn:     cmd.String("text-on"),
+		TextOff:    cmd.String("text-off"),
+		TooltipOn:  cmd.String("tooltip-on"),
+		TooltipOff: cmd.String("tooltip-off"),
+		ClassOn:    cmd.String("class-on"),
+		ClassOff:   cmd.String("class-off"),
+		HideOff:    cmd.Bool("hide-off"),
+	}
+
+	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
+	if err != nil {
+		return err
+	}
+
+	return watchEntityViaBridge(ctx, socketPath, entityID, options)
+}
+
+func resolveBridgeSocketPath(socketPath string) (string, error) {
+	if socketPath != "" {
+		return socketPath, nil
+	}
+
+	return homeassistant.DefaultBridgeSocketPath()
+}
+
+func watchEntityViaBridge(
+	ctx context.Context,
+	socketPath string,
+	entityID string,
+	options entityWatchOutputOptions,
+) error {
+	return homeassistant.BridgeWatchEntity(ctx, socketPath, entityID, func(state *homeassistant.HomeAssistantState) error {
+		printEntityState(state, options)
+		return nil
+	})
+}
+
+func watchEntityDirect(entityID string, options entityWatchOutputOptions) error {
+	conn := homeassistant.Connect()
+	defer conn.Close()
+
+	initialState, err := conn.GetState(entityID)
+	if err != nil {
+		return err
+	}
 	if initialState != nil {
 		printEntityState(initialState, options)
 	}
 
-	resp := conn.SubscribeEvents("state_changed")
+	resp, err := conn.SubscribeEvents("state_changed")
+	if err != nil {
+		return err
+	}
 	if !resp.Success {
 		return fmt.Errorf("subscribe failed: %s", resp.Error.Message)
 	}
 
 	for {
-		event := conn.ReadEvent()
+		event, err := conn.ReadEvent()
+		if err != nil {
+			return err
+		}
 		if event.Type != "event" || event.Event.EventType != "state_changed" {
 			continue
 		}

@@ -37,6 +37,8 @@ cd build/arch
 cp ../../go-automate go-automate
 cp ../../LICENSE LICENSE
 cp ../../.scripts/linux/PKGBUILD.binary PKGBUILD
+cp ../../.scripts/linux/go-automate-home-assistant-bridge.service go-automate-home-assistant-bridge.service
+cp ../../.scripts/linux/arch-package.install arch-package.install
 
 # Sanitize VERSION for Arch pkgver
 ARCH_PKGVER=$(echo "$VERSION" | sed 's/[-+]/./g')

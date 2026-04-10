@@ -2,17 +2,19 @@ package homeassistant
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
+	"sync"
 	"sync/atomic"
-
-	"github.com/timmo001/go-automate/config"
 
 	"github.com/charmbracelet/log"
 	"github.com/gorilla/websocket"
+	"github.com/timmo001/go-automate/config"
 )
 
 type HomeAssistantConn struct {
 	*websocket.Conn
+	writeMu sync.Mutex
 }
 
 type HomeAssistantRequest struct {
@@ -77,9 +79,26 @@ var (
 )
 
 func Connect() *HomeAssistantConn {
-	parsedURL, err := url.Parse(Config.URL)
+	conn, err := Dial(Config)
 	if err != nil {
-		log.Fatalf("Error parsing Home Assistant URL: %v", err)
+		log.Fatalf("Error connecting to Home Assistant: %v", err)
+	}
+
+	return conn
+}
+
+func Dial(cfg *config.ConfigHomeAssistant) (*HomeAssistantConn, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("home assistant config is not set")
+	}
+
+	if cfg.URL == "" {
+		return nil, fmt.Errorf("home assistant URL is not set")
+	}
+
+	parsedURL, err := url.Parse(cfg.URL)
+	if err != nil {
+		return nil, fmt.Errorf("parse home assistant URL: %w", err)
 	}
 
 	wsScheme := "ws"
@@ -90,40 +109,60 @@ func Connect() *HomeAssistantConn {
 	wsUrl := url.URL{Scheme: wsScheme, Host: parsedURL.Host, Path: "/api/websocket"}
 	log.Infof("Connecting to Home Assistant at: %s", wsUrl.String())
 
-	// 2. Connect to WebSocket
 	c, _, err := websocket.DefaultDialer.Dial(wsUrl.String(), nil)
 	if err != nil {
-		log.Fatalf("Error connecting to WebSocket: %v", err)
+		return nil, fmt.Errorf("connect to Home Assistant websocket: %w", err)
 	}
 	log.Info("Connected to WebSocket")
 	conn := &HomeAssistantConn{Conn: c}
 
-	// 3. Read welcome message
-	var welcomeResponse HomeAssistantResponse[any]
-	err = conn.ReadJSON(&welcomeResponse)
-	if err != nil {
-		log.Fatalf("Error reading welcome message: %v", err)
-	}
-	log.Infof("First response: %v", welcomeResponse)
-
-	// 4. Create auth message
-	authMessage := HomeAssistantAuthRequest{
-		Type:        "auth",
-		AccessToken: Config.Token,
+	if err := conn.authenticate(cfg.Token); err != nil {
+		conn.Close()
+		return nil, err
 	}
 
-	// 5. Send auth message and read response
-	authResponse := conn.SendRequest(authMessage, false)
-	log.Infof("Auth response: %v", authResponse)
-
-	return conn
+	return conn, nil
 }
 
 func RandomID() int {
 	return int(requestIDSeed.Add(1))
 }
 
-func (conn *HomeAssistantConn) SendRequest(request interface{}, debug bool) HomeAssistantResponse[any] {
+func (conn *HomeAssistantConn) authenticate(token string) error {
+	var welcomeResponse HomeAssistantResponse[any]
+	if err := conn.ReadJSON(&welcomeResponse); err != nil {
+		return fmt.Errorf("read welcome message: %w", err)
+	}
+	log.Infof("First response: %v", welcomeResponse)
+
+	authMessage := HomeAssistantAuthRequest{
+		Type:        "auth",
+		AccessToken: token,
+	}
+
+	var authResponse HomeAssistantResponse[any]
+	if err := conn.sendRequestInto(authMessage, false, &authResponse); err != nil {
+		return fmt.Errorf("authenticate websocket: %w", err)
+	}
+	log.Infof("Auth response: %v", authResponse)
+
+	if authResponse.Type != "auth_ok" {
+		return fmt.Errorf("authentication failed with response type %q", authResponse.Type)
+	}
+
+	return nil
+}
+
+func (conn *HomeAssistantConn) SendRequest(request any, debug bool) (HomeAssistantResponse[any], error) {
+	var response HomeAssistantResponse[any]
+	if err := conn.sendRequestInto(request, debug, &response); err != nil {
+		return HomeAssistantResponse[any]{}, err
+	}
+
+	return response, nil
+}
+
+func (conn *HomeAssistantConn) sendRequestInto(request any, debug bool, response any) error {
 	if debug {
 		b, err := json.Marshal(request)
 		if err != nil {
@@ -132,21 +171,21 @@ func (conn *HomeAssistantConn) SendRequest(request interface{}, debug bool) Home
 			log.Infof("Request: %s", b)
 		}
 	}
+	conn.writeMu.Lock()
 	err := conn.WriteJSON(request)
+	conn.writeMu.Unlock()
 	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		return fmt.Errorf("send request: %w", err)
 	}
 
-	var response HomeAssistantResponse[any]
-	err = conn.ReadJSON(&response)
-	if err != nil {
-		log.Fatalf("Error reading response: %v", err)
+	if err := conn.ReadJSON(response); err != nil {
+		return fmt.Errorf("read response: %w", err)
 	}
 
-	return response
+	return nil
 }
 
-func (conn *HomeAssistantConn) GetState(entityID string) *HomeAssistantState {
+func (conn *HomeAssistantConn) GetStates() ([]HomeAssistantState, error) {
 	request := HomeAssistantRequest{
 		ID:   RandomID(),
 		Type: "get_states",
@@ -154,32 +193,35 @@ func (conn *HomeAssistantConn) GetState(entityID string) *HomeAssistantState {
 
 	b, err := json.Marshal(request)
 	if err != nil {
-		log.Fatalf("Error marshalling get_states request: %v", err)
+		return nil, fmt.Errorf("marshal get_states request: %w", err)
 	}
 	log.Infof("Request: %s", b)
 
-	err = conn.WriteJSON(request)
-	if err != nil {
-		log.Fatalf("Error sending get_states request: %v", err)
-	}
-
 	var response HomeAssistantResponse[[]HomeAssistantState]
-	err = conn.ReadJSON(&response)
-	if err != nil {
-		log.Fatalf("Error reading get_states response: %v", err)
+	if err := conn.sendRequestInto(request, false, &response); err != nil {
+		return nil, fmt.Errorf("get states: %w", err)
 	}
 
-	for _, state := range response.Result {
+	return response.Result, nil
+}
+
+func (conn *HomeAssistantConn) GetState(entityID string) (*HomeAssistantState, error) {
+	states, err := conn.GetStates()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, state := range states {
 		if state.EntityID == entityID {
 			state := state
-			return &state
+			return &state, nil
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
-func (conn *HomeAssistantConn) SubscribeEvents(eventType string) HomeAssistantResponse[any] {
+func (conn *HomeAssistantConn) SubscribeEvents(eventType string) (HomeAssistantResponse[any], error) {
 	return conn.SendRequest(HomeAssistantSubscribeEventsRequest{
 		ID:        RandomID(),
 		Type:      "subscribe_events",
@@ -187,12 +229,11 @@ func (conn *HomeAssistantConn) SubscribeEvents(eventType string) HomeAssistantRe
 	}, true)
 }
 
-func (conn *HomeAssistantConn) ReadEvent() HomeAssistantEventMessage {
+func (conn *HomeAssistantConn) ReadEvent() (HomeAssistantEventMessage, error) {
 	var event HomeAssistantEventMessage
-	err := conn.ReadJSON(&event)
-	if err != nil {
-		log.Fatalf("Error reading event: %v", err)
+	if err := conn.ReadJSON(&event); err != nil {
+		return HomeAssistantEventMessage{}, fmt.Errorf("read event: %w", err)
 	}
 
-	return event
+	return event, nil
 }

@@ -5,7 +5,8 @@ pkgname=go-automate
 pkgver=${ARCH_PKGVER}
 pkgrel=1
 pkgdesc="CLI utility to trigger Home Assistant automations via keyboard shortcuts"
-source=('go-automate' 'LICENSE')
+install=arch-package.install
+source=('go-automate' 'LICENSE' 'go-automate-home-assistant-bridge.service' 'arch-package.install')
 arch=('x86_64')
 
 url="https://github.com/timmo001/go-automate"
@@ -24,4 +25,5 @@ build() {
 package() {
   install -Dm755 go-automate "$pkgdir/usr/bin/go-automate"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 go-automate-home-assistant-bridge.service "$pkgdir/usr/lib/systemd/user/go-automate-home-assistant-bridge.service"
 }
