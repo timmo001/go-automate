@@ -62,6 +62,14 @@ func main() {
 										Usage: "Icon to render for on/off states in Waybar mode",
 									},
 									&cli.StringFlag{
+										Name:  "text-on",
+										Usage: "Text to render when the state is on in Waybar mode",
+									},
+									&cli.StringFlag{
+										Name:  "text-off",
+										Usage: "Text to render when the state is not on in Waybar mode",
+									},
+									&cli.StringFlag{
 										Name:  "tooltip-on",
 										Usage: "Tooltip when the state is on in Waybar mode",
 									},
@@ -229,6 +237,8 @@ func cmdHAWatchEntity(cmd *cli.Command) error {
 	options := entityWatchOutputOptions{
 		Waybar:     cmd.Bool("waybar"),
 		Icon:       cmd.String("icon"),
+		TextOn:     cmd.String("text-on"),
+		TextOff:    cmd.String("text-off"),
 		TooltipOn:  cmd.String("tooltip-on"),
 		TooltipOff: cmd.String("tooltip-off"),
 		ClassOn:    cmd.String("class-on"),
@@ -265,11 +275,24 @@ func cmdHAWatchEntity(cmd *cli.Command) error {
 type entityWatchOutputOptions struct {
 	Waybar     bool
 	Icon       string
+	TextOn     string
+	TextOff    string
 	TooltipOn  string
 	TooltipOff string
 	ClassOn    string
 	ClassOff   string
 	HideOff    bool
+}
+
+func appendWaybarText(baseText string, label string) string {
+	if label == "" {
+		return baseText
+	}
+	if baseText == "" {
+		return label
+	}
+
+	return fmt.Sprintf("%s %s", baseText, label)
 }
 
 func printEntityState(state *homeassistant.HomeAssistantState, options entityWatchOutputOptions) {
@@ -282,6 +305,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			if options.Icon != "" {
 				text = options.Icon
 			}
+			text = appendWaybarText(text, options.TextOn)
 			if options.TooltipOn != "" {
 				tooltip = options.TooltipOn
 			}
@@ -296,6 +320,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			} else if options.Icon == "" {
 				text = state.State
 			}
+			text = appendWaybarText(text, options.TextOff)
 			if options.TooltipOff != "" {
 				tooltip = options.TooltipOff
 			}
