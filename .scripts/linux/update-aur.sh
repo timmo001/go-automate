@@ -154,7 +154,7 @@ if [ "$IS_CI" = "true" ]; then
   echo ""
   echo "Committing and pushing to AUR..."
 
-  git add -f PKGBUILD .SRCINFO
+  git add -f PKGBUILD .SRCINFO arch-package.install
   git commit -m "Update to version $PKGVER
 
 Automated update from GitHub Actions
@@ -177,7 +177,7 @@ else
   echo ""
   echo "To commit and push, run:"
   echo "  cd $AUR_REPO_PATH"
-  echo "  git add PKGBUILD .SRCINFO"
+  echo "  git add PKGBUILD .SRCINFO arch-package.install"
   echo "  git commit -m 'Update to version $PKGVER'"
   echo "  git push"
 fi
