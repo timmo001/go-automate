@@ -18,3 +18,10 @@
 - **Configuration**: Load via viper from `~/.config/go-automate/config.yml`; use XDG standards for cross-platform paths
 - **Home Assistant**: WebSocket API only (not REST); connection flow: Connect → Auth → Request; generate random IDs per request
 - **Logging**: Use charmbracelet/log package; `log.Info()` for user-facing messages, `log.Debug()` for debug info, `log.Error()`/`log.Fatal()` for errors
+
+## Home Assistant Bridge Watch Policy (Go Automate)
+
+- For entity watchers, prefer bridge-backed commands by default: `go-automate ha bridge watch entity ...`
+- Treat direct websocket watcher usage as exceptional: allow only for explicit troubleshooting (`--direct`) and surface a warning in CLI output/help text
+- In help and flag descriptions, strongly recommend bridge watch for lower network usage
+- When output is plain text (no `--waybar`), warn users that machine consumers should prefer `--waybar` JSON output
