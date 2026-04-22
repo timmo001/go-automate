@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -327,7 +328,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 				EntityID: request.EntityID,
 				State:    nil,
 			}); err != nil {
-				log.Errorf("Error writing bridge snapshot response: %v", err)
+				logBridgeWriteError("Error writing bridge snapshot response", err)
 			}
 			return
 		}
@@ -338,7 +339,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 			EntityID: request.EntityID,
 			State:    &stateCopy,
 		}); err != nil {
-			log.Errorf("Error writing bridge snapshot response: %v", err)
+			logBridgeWriteError("Error writing bridge snapshot response", err)
 		}
 	case "watch_entity":
 		if request.EntityID == "" {
@@ -356,7 +357,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 				EntityID: request.EntityID,
 				State:    &stateCopy,
 			}); err != nil {
-				log.Errorf("Error writing bridge snapshot response: %v", err)
+				logBridgeWriteError("Error writing bridge snapshot response", err)
 				return
 			}
 		}
@@ -372,7 +373,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 					EntityID: request.EntityID,
 					State:    &stateCopy,
 				}); err != nil {
-					log.Errorf("Error writing bridge event response: %v", err)
+					logBridgeWriteError("Error writing bridge event response", err)
 					return
 				}
 			}
@@ -387,8 +388,34 @@ func (bridge *Bridge) writeBridgeError(encoder *json.Encoder, err error) {
 		Type:  "error",
 		Error: err.Error(),
 	}); encodeErr != nil {
-		log.Errorf("Error writing bridge error response: %v", encodeErr)
+		logBridgeWriteError("Error writing bridge error response", encodeErr)
 	}
+}
+
+func isDisconnectError(err error) bool {
+	if errors.Is(err, syscall.EPIPE) ||
+		errors.Is(err, syscall.ECONNRESET) ||
+		errors.Is(err, net.ErrClosed) {
+		return true
+	}
+
+	var netErr *net.OpError
+	if errors.As(err, &netErr) {
+		return errors.Is(netErr.Err, syscall.EPIPE) ||
+			errors.Is(netErr.Err, syscall.ECONNRESET) ||
+			errors.Is(netErr.Err, net.ErrClosed)
+	}
+
+	return false
+}
+
+func logBridgeWriteError(message string, err error) {
+	if isDisconnectError(err) {
+		log.Debugf("%s: client disconnected: %v", message, err)
+		return
+	}
+
+	log.Errorf("%s: %v", message, err)
 }
 
 func BridgeWatchEntity(
