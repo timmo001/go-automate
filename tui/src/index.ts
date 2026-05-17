@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { createCliRenderer } from "@opentui/core";
 import { createCommandRunner } from "./services/CommandRunner.js";
-import { DEFAULT_THEME } from "./theme.js";
+import { loadTheme } from "./theme.js";
 import { Toast } from "./tui/Toast.js";
 import { App } from "./tui/App.js";
 import { parseFlags, resolveSubcommand, printHelp } from "./flags.js";
@@ -43,10 +43,10 @@ if (flags.subcommand) {
   }
 }
 
-const theme = DEFAULT_THEME;
-
 const program = Effect.gen(function* () {
   log("Starting...");
+
+  const theme = yield* loadTheme;
 
   log("Creating renderer...");
   const renderer = yield* Effect.promise(() =>
@@ -86,7 +86,9 @@ const program = Effect.gen(function* () {
 
 log("Launching...");
 
-Effect.runPromise(program).catch((err) => {
+const runnable = program.pipe(Effect.scoped);
+
+Effect.runPromise(runnable).catch((err) => {
   log(`Fatal error: ${err}`);
   console.error(err);
   process.exit(1);

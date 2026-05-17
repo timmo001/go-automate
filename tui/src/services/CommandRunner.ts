@@ -1,9 +1,18 @@
 import type { CliRenderer } from "@opentui/core";
+import { Effect, Schema } from "effect";
 import type { NotifyConfig } from "../types.js";
 import type { Toast } from "../tui/Toast.js";
 
 const log = (msg: string) =>
   console.error(`[go-automate-tui:CommandRunner] ${msg}`);
+
+/** Typed error for command execution failures */
+export class CommandRunnerError extends Schema.TaggedErrorClass<CommandRunnerError>()(
+  "CommandRunnerError",
+  {
+    message: Schema.String,
+  },
+) {}
 
 /** Service for executing shell commands with TUI suspend/resume lifecycle */
 export interface CommandRunnerService {
@@ -12,11 +21,12 @@ export interface CommandRunnerService {
   readonly runSuspended: (cmd: string, wait: boolean) => Promise<void>;
 
   /** Run a command in the background without suspending the TUI.
-   *  Returns immediately; stdout/stderr are captured silently. */
-  readonly runSilent: (cmd: string) => Promise<void>;
+   *  Returns immediately; fails with {@link CommandRunnerError} on non-zero exit. */
+  readonly runSilent: (cmd: string) => Effect.Effect<void, CommandRunnerError>;
 
-  /** Run a command silently with toast notifications for progress and result. */
-  readonly runNotify: (cmd: string, notify: NotifyConfig) => Promise<void>;
+  /** Run a command silently with toast notifications for progress and result.
+   *  Errors are recovered internally via toast — the returned Effect always succeeds. */
+  readonly runNotify: (cmd: string, notify: NotifyConfig) => Effect.Effect<void>;
 
   /** Replace the TUI process with a command (no return). */
   readonly runReplace: (cmd: string) => Promise<never>;
@@ -79,42 +89,75 @@ export function createCommandRunner(
       }
     },
 
-    runSilent: async (cmd) => {
+    runSilent: Effect.fn("CommandRunner.runSilent")(function* (
+      cmd: string,
+    ): Effect.fn.Return<void, CommandRunnerError> {
       log(`Running silently: ${cmd}`);
-      const proc = Bun.spawn(["bash", "-c", cmd], {
-        stdout: "pipe",
-        stderr: "pipe",
+
+      const { exitCode, stderr } = yield* Effect.tryPromise({
+        try: async () => {
+          const proc = Bun.spawn(["bash", "-c", cmd], {
+            stdout: "pipe",
+            stderr: "pipe",
+          });
+          const exitCode = await proc.exited;
+          const stderr = await new Response(proc.stderr).text();
+          return { exitCode, stderr };
+        },
+        catch: (error) =>
+          new CommandRunnerError({
+            message: error instanceof Error ? error.message : String(error),
+          }),
       });
-      const exitCode = await proc.exited;
 
       if (exitCode !== 0) {
-        const stderr = await new Response(proc.stderr).text();
-        log(`Silent command failed (exit ${exitCode}): ${stderr}`);
-      } else {
-        log(`Silent command completed: ${cmd}`);
+        return yield* Effect.fail(
+          new CommandRunnerError({
+            message: stderr.trim().split("\n")[0] || `Command failed (exit ${exitCode})`,
+          }),
+        );
       }
-    },
 
-    runNotify: async (cmd, notify) => {
+      log(`Silent command completed: ${cmd}`);
+    }),
+
+    runNotify: Effect.fn("CommandRunner.runNotify")(function* (
+      cmd: string,
+      notify: NotifyConfig,
+    ): Effect.fn.Return<void, never> {
       log(`Running with notification: ${cmd}`);
       toast.show(notify.id, notify.progress, "info");
 
-      const proc = Bun.spawn(["bash", "-c", cmd], {
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-      const exitCode = await proc.exited;
+      const result = yield* Effect.tryPromise({
+        try: async () => {
+          const proc = Bun.spawn(["bash", "-c", cmd], {
+            stdout: "pipe",
+            stderr: "pipe",
+          });
+          const exitCode = await proc.exited;
+          const stderr = await new Response(proc.stderr).text();
+          return { exitCode, stderr };
+        },
+        catch: (error) =>
+          new CommandRunnerError({
+            message: error instanceof Error ? error.message : String(error),
+          }),
+      }).pipe(
+        Effect.catch((err: CommandRunnerError) =>
+          Effect.succeed({ exitCode: 1, stderr: err.message }),
+        ),
+      );
 
-      if (exitCode !== 0) {
-        const stderr = await new Response(proc.stderr).text();
-        const errMsg = stderr.trim().split("\n")[0] || "Command failed";
-        log(`Notify command failed (exit ${exitCode}): ${stderr}`);
+      if (result.exitCode !== 0) {
+        const errMsg =
+          result.stderr.trim().split("\n")[0] || "Command failed";
+        log(`Notify command failed (exit ${result.exitCode}): ${result.stderr}`);
         toast.show(notify.id, errMsg, "error");
       } else {
         log(`Notify command completed: ${cmd}`);
         toast.show(notify.id, notify.success, "success");
       }
-    },
+    }),
 
     runReplace: async (cmd) => {
       log(`Replacing process with: ${cmd}`);

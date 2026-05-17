@@ -1,4 +1,5 @@
 import type { CliRenderer } from "@opentui/core";
+import { Effect } from "effect";
 import type { ViewId, MenuItem, MenuAction } from "../types.js";
 import type { Theme } from "../theme.js";
 import { menuItemsById, submenus } from "../menu.js";
@@ -212,15 +213,18 @@ export class App {
         break;
 
       case "silent":
-        this.commandRunner.runSilent(action.cmd).catch((err) => {
-          log(`Silent command error: ${err}`);
-        });
+        Effect.runPromise(
+          this.commandRunner.runSilent(action.cmd).pipe(
+            Effect.catch((err) => {
+              log(`Silent command error: ${err.message}`);
+              return Effect.void;
+            }),
+          ),
+        );
         break;
 
       case "notify":
-        this.commandRunner.runNotify(action.cmd, action.notify).catch((err) => {
-          log(`Notify command error: ${err}`);
-        });
+        Effect.runPromise(this.commandRunner.runNotify(action.cmd, action.notify));
         break;
 
       case "view":
