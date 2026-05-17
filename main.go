@@ -154,7 +154,19 @@ func main() {
 					return cmdNotify(cmd)
 				},
 			},
+			{
+				Name:  "tui",
+				Usage: "Launch the terminal user interface",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					return launchTUI()
+				},
+			},
 		},
+	}
+
+	// Auto-launch TUI when no subcommand is given in an interactive terminal
+	if len(os.Args) <= 1 {
+		maybeLaunchTUI()
 	}
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
