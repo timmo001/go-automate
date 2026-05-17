@@ -1,4 +1,10 @@
-import type { MenuItem, MenuVariant, NotifyConfig, FlagField, FlagPopupAction, ViewId } from "./types.js";
+import type {
+  MenuItem,
+  MenuVariant,
+  NotifyConfig,
+  FlagField,
+  FlagPopupAction,
+} from "./types.js";
 
 // --- Helpers ---
 
@@ -32,10 +38,6 @@ function silent(command: string): MenuItem["action"] {
 
 function notify(command: string, config: NotifyConfig): MenuItem["action"] {
   return { type: "notify", cmd: command, notify: config };
-}
-
-function view(viewId: ViewId): MenuItem["action"] {
-  return { type: "view", viewId };
 }
 
 function submenu(menuId: string): MenuItem["action"] {
@@ -149,11 +151,9 @@ function createControlSubmenuItems(
       "󰑐",
       "Toggle",
       `Toggle a ${labelPrefix}`,
-      flagPopup(
-        `go-automate ha ${domain} toggle`,
-        `${labelPrefix} › Toggle`,
-        [entityNameField],
-      ),
+      flagPopup(`go-automate ha ${domain} toggle`, `${labelPrefix} › Toggle`, [
+        entityNameField,
+      ]),
       undefined,
       ["switch", "flip", "swap"],
     ),
@@ -170,7 +170,17 @@ const mainItems: readonly MenuItem[] = [
     "Start the HA websocket bridge",
     replace("go-automate ha bridge serve"),
     undefined,
-    ["start", "daemon", "run", "server", "launch", "bridge", ":run", ":serve", "go"],
+    [
+      "start",
+      "daemon",
+      "run",
+      "server",
+      "launch",
+      "bridge",
+      ":run",
+      ":serve",
+      "go",
+    ],
   ),
 
   item(
@@ -188,11 +198,9 @@ const mainItems: readonly MenuItem[] = [
     "󰈈",
     "Watch Entity",
     "Watch entity state changes via bridge",
-    flagPopup(
-      "go-automate ha bridge watch entity",
-      "Watch Entity",
-      [entityIdField],
-    ),
+    flagPopup("go-automate ha bridge watch entity", "Watch Entity", [
+      entityIdField,
+    ]),
     undefined,
     ["observe", "monitor", "state", "sensor", "bridge", ":w"],
   ),
@@ -202,11 +210,10 @@ const mainItems: readonly MenuItem[] = [
     "󰍡",
     "Notify",
     "Send a desktop notification",
-    flagPopup(
-      "go-automate notify",
-      "Send Notification",
-      [notifySummaryField, notifyBodyField],
-    ),
+    flagPopup("go-automate notify", "Send Notification", [
+      notifySummaryField,
+      notifyBodyField,
+    ]),
     undefined,
     ["notification", "alert", "message", "send", ":n"],
   ),
@@ -267,7 +274,10 @@ const haItems: readonly MenuItem[] = [
 
 const lightItems = createControlSubmenuItems("light", "Light");
 const switchItems = createControlSubmenuItems("switch", "Switch");
-const inputBooleanItems = createControlSubmenuItems("input_boolean", "Input Boolean");
+const inputBooleanItems = createControlSubmenuItems(
+  "input_boolean",
+  "Input Boolean",
+);
 
 // --- Assist Satellite submenu ---
 
