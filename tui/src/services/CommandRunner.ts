@@ -161,7 +161,7 @@ export function createCommandRunner(
 
     runReplace: async (cmd) => {
       log(`Replacing process with: ${cmd}`);
-      renderer.destroy();
+      renderer.suspend();
 
       const proc = Bun.spawn(["bash", "-c", cmd], {
         stdin: "inherit",
