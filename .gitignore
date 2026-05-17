@@ -4,5 +4,7 @@
 # Builds
 go-automate
 go-automate.*
+go-automate-tui
+go-automate-tui.*
 build/
 dist/
