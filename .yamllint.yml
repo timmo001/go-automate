@@ -12,4 +12,3 @@ rules:
   truthy:
     ignore: |
       .github/workflows/
-
