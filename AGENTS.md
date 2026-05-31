@@ -24,4 +24,4 @@
 - For entity watchers, prefer bridge-backed commands by default: `go-automate ha bridge watch entity ...`
 - Treat direct websocket watcher usage as exceptional: allow only for explicit troubleshooting (`--direct`) and surface a warning in CLI output/help text
 - In help and flag descriptions, strongly recommend bridge watch for lower network usage
-- When output is plain text (no `--waybar`), warn users that machine consumers should prefer `--waybar` JSON output
+- When output is plain text (no `--bar-json`), warn users that machine consumers should prefer `--bar-json` JSON output

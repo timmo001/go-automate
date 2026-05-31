@@ -57,7 +57,7 @@ func main() {
 								Name:        "entity",
 								Aliases:     []string{"e"},
 								ArgsUsage:   "<entity_id>",
-								Description: "If the bridge is available, this command uses it by default. Add `--waybar` for machine-readable JSON output.",
+								Description: "If the bridge is available, this command uses it by default. Add `--bar-json` for machine-readable JSON output.",
 								Flags:       createEntityWatchFlags(true),
 								Action: func(ctx context.Context, cmd *cli.Command) error {
 									return cmdHAWatchEntity(ctx, cmd)
@@ -94,7 +94,7 @@ func main() {
 										Name:        "entity",
 										Aliases:     []string{"e"},
 										ArgsUsage:   "<entity_id>",
-										Description: "Bridge-backed watcher. Use `--waybar` for stable JSON output for downstream commands.",
+										Description: "Bridge-backed watcher. Use `--bar-json` for stable JSON output for downstream commands.",
 										Flags:       createEntityWatchFlags(false, &cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
 										Action: func(ctx context.Context, cmd *cli.Command) error {
 											return cmdHABridgeWatchEntity(ctx, cmd)
@@ -209,40 +209,41 @@ func createToggleServiceCommands(domain string) []*cli.Command {
 func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []cli.Flag {
 	flags := []cli.Flag{
 		&cli.BoolFlag{
-			Name:  "waybar",
-			Usage: "Output machine-readable JSON lines for Waybar (recommended for script consumers)",
+			Name:    "bar-json",
+			Aliases: []string{"waybar"},
+			Usage:   "Output machine-readable JSON lines for status bars and shell modules (recommended for script consumers)",
 		},
 		&cli.StringFlag{
 			Name:  "icon",
-			Usage: "Icon to render for on/off states in Waybar mode",
+			Usage: "Icon to render for on/off states in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "text-on",
-			Usage: "Text to render when the state is on in Waybar mode",
+			Usage: "Text to render when the state is on in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "text-off",
-			Usage: "Text to render when the state is not on in Waybar mode",
+			Usage: "Text to render when the state is not on in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "tooltip-on",
-			Usage: "Tooltip when the state is on in Waybar mode",
+			Usage: "Tooltip when the state is on in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "tooltip-off",
-			Usage: "Tooltip when the state is not on in Waybar mode",
+			Usage: "Tooltip when the state is not on in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "class-on",
-			Usage: "CSS class when the state is on in Waybar mode",
+			Usage: "Status bar class when the state is on in bar JSON mode",
 		},
 		&cli.StringFlag{
 			Name:  "class-off",
-			Usage: "CSS class when the state is not on in Waybar mode",
+			Usage: "Status bar class when the state is not on in bar JSON mode",
 		},
 		&cli.BoolFlag{
 			Name:  "hide-off",
-			Usage: "Hide the Waybar module when the state is not on",
+			Usage: "Hide the status bar module when the state is not on",
 		},
 	}
 
@@ -320,7 +321,7 @@ func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	options := entityWatchOutputOptions{
-		Waybar:     cmd.Bool("waybar"),
+		BarJSON:    cmd.Bool("bar-json"),
 		Icon:       cmd.String("icon"),
 		TextOn:     cmd.String("text-on"),
 		TextOff:    cmd.String("text-off"),
@@ -379,7 +380,7 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	options := entityWatchOutputOptions{
-		Waybar:     cmd.Bool("waybar"),
+		BarJSON:    cmd.Bool("bar-json"),
 		Icon:       cmd.String("icon"),
 		TextOn:     cmd.String("text-on"),
 		TextOff:    cmd.String("text-off"),
@@ -400,11 +401,11 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 }
 
 func warnIfPlainWatchOutput(options entityWatchOutputOptions) {
-	if options.Waybar {
+	if options.BarJSON {
 		return
 	}
 
-	log.Warn("Watch output is plain text without --waybar. Use --waybar for stable JSON output in scripts and bars.")
+	log.Warn("Watch output is plain text without --bar-json. Use --bar-json for stable JSON output in scripts and bars.")
 }
 
 func resolveBridgeSocketPath(socketPath string) (string, error) {
@@ -465,7 +466,7 @@ func watchEntityDirect(entityID string, options entityWatchOutputOptions) error 
 }
 
 type entityWatchOutputOptions struct {
-	Waybar     bool
+	BarJSON    bool
 	Icon       string
 	TextOn     string
 	TextOff    string
@@ -476,7 +477,7 @@ type entityWatchOutputOptions struct {
 	HideOff    bool
 }
 
-func appendWaybarText(baseText string, label string) string {
+func appendBarText(baseText string, label string) string {
 	if label == "" {
 		return baseText
 	}
@@ -488,7 +489,7 @@ func appendWaybarText(baseText string, label string) string {
 }
 
 func printEntityState(state *homeassistant.HomeAssistantState, options entityWatchOutputOptions) {
-	if options.Waybar {
+	if options.BarJSON {
 		text := state.State
 		tooltip := state.State
 		className := state.State
@@ -497,7 +498,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			if options.Icon != "" {
 				text = options.Icon
 			}
-			text = appendWaybarText(text, options.TextOn)
+			text = appendBarText(text, options.TextOn)
 			if options.TooltipOn != "" {
 				tooltip = options.TooltipOn
 			}
@@ -512,7 +513,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			} else if options.Icon == "" {
 				text = state.State
 			}
-			text = appendWaybarText(text, options.TextOff)
+			text = appendBarText(text, options.TextOff)
 			if options.TooltipOff != "" {
 				tooltip = options.TooltipOff
 			}
@@ -534,7 +535,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			"class":   className,
 		})
 		if err != nil {
-			log.Fatalf("error marshalling waybar payload: %v", err)
+			log.Fatalf("error marshalling bar JSON payload: %v", err)
 		}
 
 		fmt.Println(string(payload))
