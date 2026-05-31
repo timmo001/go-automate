@@ -209,9 +209,8 @@ func createToggleServiceCommands(domain string) []*cli.Command {
 func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []cli.Flag {
 	flags := []cli.Flag{
 		&cli.BoolFlag{
-			Name:    "bar-json",
-			Aliases: []string{"waybar"},
-			Usage:   "Output machine-readable JSON lines for status bars and shell modules (recommended for script consumers)",
+			Name:  "bar-json",
+			Usage: "Output machine-readable JSON lines for status bars and shell modules (recommended for script consumers)",
 		},
 		&cli.StringFlag{
 			Name:  "icon",
