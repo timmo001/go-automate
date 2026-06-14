@@ -41,6 +41,9 @@ to a direct WebSocket connection if the bridge is unavailable. Prefer
 | `--direct` | Bypass the bridge and connect directly (higher network usage). |
 | `--bridge-socket` | Path to the bridge socket to try before falling back. |
 
+See [Bar JSON](/reference/bar-json/) for the output shape and how the `--bar-json` flags
+combine.
+
 ### `ha bridge serve`
 
 Serve the shared Home Assistant bridge. See [Running the Bridge](/running/).

@@ -78,35 +78,8 @@ Without it, Go Automate prints plain text and warns that machine consumers shoul
 JSON.
 :::
 
-### Waybar example
-
-```json title="~/.config/waybar/config.jsonc"
-"custom/guest_mode": {
-  "exec": "go-automate ha bridge watch entity input_boolean.guest_mode --bar-json --text-on 'Guest' --tooltip-on 'Guest mode on' --tooltip-off 'Guest mode off' --class-on 'active' --hide-off",
-  "return-type": "json",
-  "restart-interval": 5
-}
-```
-
-The watcher streams a JSON line on every state change, so the module updates live. The
-`restart-interval` makes Waybar restart the watcher if it ever exits (for example while the
-bridge restarts).
-
-## Output flags
-
-These flags apply in `--bar-json` mode on both `ha watch entity` and `ha bridge watch entity`:
-
-| Flag | Effect |
-| --- | --- |
-| `--bar-json` | Emit JSON lines (`text`, `tooltip`, `class`) for status bars. |
-| `--icon` | Text/icon to show for the state. Replaces the raw state text. |
-| `--text-on` | Text appended when the state is `on`. |
-| `--text-off` | Text appended when the state is not `on`. |
-| `--tooltip-on` | Tooltip when the state is `on`. |
-| `--tooltip-off` | Tooltip when the state is not `on`. |
-| `--class-on` | Status-bar class when the state is `on`. |
-| `--class-off` | Status-bar class when the state is not `on`. |
-| `--hide-off` | Hide the module (empty text, `hidden` class) when the state is not `on`. |
+For the full output contract, every `--bar-json` flag and a complete Waybar module, see
+[Bar JSON](/reference/bar-json/).
 
 Connection flags differ by command:
 
@@ -118,5 +91,6 @@ Connection flags differ by command:
 
 ## Next steps
 
+- See [Bar JSON](/reference/bar-json/) to wire a watcher into a status bar.
 - Make sure the [bridge](/running/) is running for the lowest network usage.
 - See the [Bridge Protocol](/reference/bridge/) for how watchers talk to the bridge.
