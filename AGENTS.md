@@ -1,5 +1,12 @@
 # Agent Guide for Go Automate
 
+## Documentation
+- `docs/` is the source of truth for all user-facing documentation. It is an Astro/Starlight site; content lives in `docs/src/content/docs/` and is served at <https://go-automate.timmo.dev>.
+- Any change to behaviour, commands, flags, configuration, the bridge protocol, or the TUI must update the relevant page under `docs/src/content/docs/` in the same change.
+- Keep the root `README.md` short; it should link to `docs/` rather than duplicate content. Do not let other Markdown files become a second source of truth.
+- Reference pages map to features: `using/cli.md`, `using/tui.md`, `using/home-assistant.md`, `using/watching.md`, `using/notifications.md`, `reference/commands.md`, `reference/bridge.md`, plus `install.mdx`, `configuration.mdx`, and `running.mdx`.
+- Verify doc edits build with `pnpm build` from the `docs/` directory.
+
 ## Build & Test Commands
 - Build: `go build`
 - Package (Arch): `make create_arch`
