@@ -31,6 +31,28 @@ export default defineConfig({
         baseUrl: 'https://github.com/timmo001/go-automate/edit/main/docs/',
       },
       lastUpdated: true,
+      head: [
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image', content: 'https://go-automate.timmo.dev/og.png' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image:width', content: '1200' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image:height', content: '630' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image:alt', content: 'Go Automate' },
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'twitter:image', content: 'https://go-automate.timmo.dev/og.png' },
+        },
+      ],
       plugins: [
         starlightLinksValidator(),
         starlightLlmsTxt({

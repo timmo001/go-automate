@@ -8,3 +8,4 @@ go-automate-tui
 go-automate-tui.*
 build/
 dist/
+.vercel
