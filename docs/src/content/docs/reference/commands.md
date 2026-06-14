@@ -55,7 +55,7 @@ Serve the shared Home Assistant bridge. See [Running the Bridge](/running/).
 ### `ha bridge watch entity <entity_id>` (alias `ha b w e`)
 
 Watch an entity through the bridge (recommended). Takes the same `--bar-json` output flags
-as `ha watch entity`.
+as `ha watch entity`. See [Bar JSON](/reference/bar-json/) for the output shape.
 
 | Flag | Effect |
 | --- | --- |
