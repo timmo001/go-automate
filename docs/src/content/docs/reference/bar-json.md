@@ -4,8 +4,9 @@ description: The machine-readable JSON output that entity watchers emit for stat
 ---
 
 `--bar-json` switches an entity watcher from plain text to machine-readable JSON. Each state
-change prints one JSON object on its own line, ready to feed straight into a status bar such
-as [Waybar](https://github.com/Alexays/Waybar) or any shell module that reads JSON.
+change prints one JSON object on its own line. It is a generic JSON-lines contract, so it
+works with any status bar, shell or script that reads line-delimited JSON, including
+[Waybar](https://github.com/Alexays/Waybar) and [Quickshell](https://quickshell.org/).
 
 It is supported by both watch commands:
 
@@ -30,11 +31,13 @@ Every line is a JSON object with exactly three string fields, always present:
 
 | Field | Purpose |
 | --- | --- |
-| `text` | The label the bar renders. |
+| `text` | The label to render. |
 | `tooltip` | The hover tooltip. |
-| `class` | The CSS class the bar applies for styling. |
+| `class` | A class name for styling. |
 
-These map directly onto a Waybar custom module with `"return-type": "json"`.
+The field names match Waybar's custom-module schema (`"return-type": "json"`), but the object
+is plain JSON. Any consumer can read the line and use whichever fields it supports, so the
+same command drives a Waybar module, a Quickshell widget or a custom script.
 
 ## How the fields are derived
 
@@ -105,7 +108,12 @@ With the entity off, `--hide-off` blanks the text and marks the class hidden:
 { "text": "", "tooltip": "Guest mode is off", "class": "off hidden" }
 ```
 
-### Waybar module
+## Consuming the output
+
+Any program that reads line-delimited JSON from a process can consume a watcher. The watcher
+streams a JSON line on every state change, so the consumer updates live.
+
+### Waybar
 
 ```json title="~/.config/waybar/config.jsonc"
 "custom/guest_mode": {
@@ -115,9 +123,24 @@ With the entity off, `--hide-off` blanks the text and marks the class hidden:
 }
 ```
 
-The watcher streams a JSON line on every state change, so the module updates live. The
-`restart-interval` makes Waybar restart the watcher if it ever exits (for example while the
-bridge restarts).
+The `restart-interval` makes Waybar restart the watcher if it ever exits (for example while
+the bridge restarts).
+
+### Other shells and scripts
+
+Quickshell and similar shells run the same command and parse each line from the process's
+standard output. The contract is identical: read a line, decode the JSON, use the `text`,
+`tooltip` and `class` fields. From a shell, you can read it line by line:
+
+```bash
+go-automate ha bridge watch entity input_boolean.guest_mode --bar-json |
+  while IFS= read -r line; do
+    printf '%s\n' "$line" | jq -r '.text'
+  done
+```
+
+Restart the watcher if it exits, the same way Waybar's `restart-interval` does, so the
+consumer reconnects after a bridge restart.
 
 ## Next steps
 
