@@ -95,6 +95,7 @@ export default defineConfig({
           items: [
             { label: 'Overview', slug: 'reference' },
             { label: 'Commands', slug: 'reference/commands' },
+            { label: 'Bar JSON', slug: 'reference/bar-json' },
             { label: 'Bridge Protocol', slug: 'reference/bridge' },
           ],
         },
