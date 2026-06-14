@@ -1,0 +1,17 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^/"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^http://homeassistant.local"
+    },
+    {
+      "pattern": "^https://go-automate.timmo.dev"
+    }
+  ],
+  "retryOn429": true
+}

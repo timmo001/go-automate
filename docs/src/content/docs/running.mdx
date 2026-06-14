@@ -1,0 +1,119 @@
+---
+title: Running the Bridge
+description: Run the Go Automate Home Assistant bridge as a systemd user service.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+The bridge keeps a single WebSocket connection to Home Assistant and shares it with every
+watcher on your machine. Running it as a background service means commands like
+[`ha bridge watch entity`](/using/watching/) and status-bar modules reuse one connection
+instead of each opening their own.
+
+:::note
+[Configure](/configuration/) your Home Assistant URL and token before starting the
+bridge. Without a token the service exits with an error.
+:::
+
+## How it works
+
+The bridge listens on a Unix socket, by default at
+`$XDG_RUNTIME_DIR/go-automate/home-assistant.sock`. Watchers connect to that socket
+rather than to Home Assistant directly. The service runs:
+
+```bash
+go-automate ha bridge serve
+```
+
+See the [Bridge Protocol](/reference/bridge/) reference for the socket details.
+
+## Systemd user service
+
+The Arch package installs a user service called
+`go-automate-home-assistant-bridge.service` and enables it globally for future logins. If
+it is not running in your current session yet, enable it manually.
+
+<Steps>
+
+1. Reload the user systemd daemon:
+
+   ```bash
+   systemctl --user daemon-reload
+   ```
+
+2. Enable and start the service:
+
+   ```bash
+   systemctl --user enable --now go-automate-home-assistant-bridge.service
+   ```
+
+3. Check the service status:
+
+   ```bash
+   systemctl --user status go-automate-home-assistant-bridge.service
+   ```
+
+</Steps>
+
+To follow the logs:
+
+```bash
+journalctl --user -u go-automate-home-assistant-bridge.service -f
+```
+
+:::tip
+User services only run while you are logged in. To keep the bridge running at boot and
+after you log out, enable lingering for your user:
+
+```bash
+sudo loginctl enable-linger $USER
+```
+
+:::
+
+## Installing the service manually
+
+If you built from source, install the unit yourself:
+
+<Steps>
+
+1. Copy the unit file from the repository to your user units directory:
+
+   ```bash
+   mkdir -p ~/.config/systemd/user
+   cp .scripts/linux/go-automate-home-assistant-bridge.service ~/.config/systemd/user/
+   ```
+
+   :::note
+   The unit runs `/usr/bin/go-automate`. If your binary is elsewhere (for example
+   `~/.local/bin/go-automate`), edit `ExecStart` to match. Check the path with
+   `which go-automate`.
+   :::
+
+2. Reload, enable and start it:
+
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable --now go-automate-home-assistant-bridge.service
+   ```
+
+</Steps>
+
+## Running it in the foreground
+
+For quick troubleshooting you can run the bridge directly instead of as a service:
+
+```bash
+go-automate ha bridge serve
+```
+
+Pass `--socket` to use a custom socket path:
+
+```bash
+go-automate ha bridge serve --socket /tmp/go-automate-ha.sock
+```
+
+## Next steps
+
+- [Watch entities](/using/watching/) through the bridge.
+- Wire watchers into a [status bar](/using/watching/#status-bars).

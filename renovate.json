@@ -8,5 +8,20 @@
   "dependencyDashboard": true,
   "labels": [
     "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Group documentation site (Astro/Starlight) dependencies.",
+      "groupName": "docs site",
+      "matchFileNames": ["docs/**"]
+    },
+    {
+      "description": "Group GitHub Actions.",
+      "groupName": "github actions",
+      "matchManagers": ["github-actions"]
+    }
   ]
 }

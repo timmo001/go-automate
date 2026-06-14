@@ -1,0 +1,106 @@
+---
+title: Go Automate
+description: A CLI utility to run common tasks and trigger Home Assistant automations.
+template: splash
+hero:
+  tagline: Run common tasks and trigger Home Assistant from anywhere.
+  image:
+    file: ../../assets/logo.svg
+    alt: Go Automate logo
+  actions:
+    - text: Install
+      link: /install/
+      icon: right-arrow
+    - text: View Docs
+      link: /overview/
+      icon: right-arrow
+      variant: minimal
+---
+
+import { CardGrid, LinkButton } from '@astrojs/starlight/components';
+import { Icon } from 'astro-icon/components';
+import LandingCard from '../../components/LandingCard.astro';
+
+Go Automate is a small command-line utility that runs common tasks and triggers automations in your home. Bind its commands to keyboard shortcuts or patched apps to control [Home Assistant](https://www.home-assistant.io) instantly.
+
+## Features
+
+<CardGrid>
+  <LandingCard title="Control Home Assistant">
+    <Icon slot="icon" name="mdi:home-assistant" />
+    Turn lights, switches and input booleans on, off or toggle them, and announce to
+    assist satellites, all from the command line.
+  </LandingCard>
+  <LandingCard title="Shortcut-Driven Automations">
+    <Icon slot="icon" name="mdi:keyboard" />
+    Bind commands to keyboard shortcuts or patched apps to fire automations the moment
+    you press a key.
+  </LandingCard>
+  <LandingCard title="Shared Local Bridge">
+    <Icon slot="icon" name="mdi:lan-connect" />
+    A background bridge keeps a single WebSocket connection to Home Assistant, so
+    watchers and status bars stay cheap on the network.
+  </LandingCard>
+  <LandingCard title="Watch Entities">
+    <Icon slot="icon" name="mdi:eye-outline" />
+    Stream entity state changes live, with stable JSON output for status bars and
+    shell modules.
+  </LandingCard>
+  <LandingCard title="Desktop Notifications">
+    <Icon slot="icon" name="mdi:bell-outline" />
+    Send desktop notifications through <code>notify-send</code> from scripts and
+    automations.
+  </LandingCard>
+  <LandingCard title="Interactive TUI">
+    <Icon slot="icon" name="mdi:console" />
+    A searchable terminal menu launches automatically in an interactive terminal, with
+    every command a keystroke away.
+  </LandingCard>
+</CardGrid>
+
+## Home Assistant
+
+<CardGrid>
+  <LandingCard title="Lights">
+    <Icon slot="icon" name="mdi:lightbulb-outline" />
+    Turn on, turn off or toggle any light entity.
+  </LandingCard>
+  <LandingCard title="Switches">
+    <Icon slot="icon" name="mdi:toggle-switch-outline" />
+    Turn on, turn off or toggle any switch entity.
+  </LandingCard>
+  <LandingCard title="Input Booleans">
+    <Icon slot="icon" name="mdi:checkbox-marked-outline" />
+    Flip helper booleans to drive your automations.
+  </LandingCard>
+  <LandingCard title="Assist Satellites">
+    <Icon slot="icon" name="mdi:bullhorn-outline" />
+    Announce a message to an area through an assist satellite.
+  </LandingCard>
+</CardGrid>
+
+## Links / Resources
+
+<CardGrid>
+  <LandingCard title="Suggest a Feature / Report a Bug">
+    <Icon slot="icon" name="mdi:notebook-plus-outline" />
+    Thought of a feature that could be added? Found an issue? Suggest it here.
+    <LinkButton href="https://github.com/timmo001/go-automate/issues" variant="secondary" target="_blank" rel="noopener noreferrer">
+      Open issues
+    </LinkButton>
+  </LandingCard>
+  <LandingCard title="Contribute to the Application">
+    <Icon slot="icon" name="mdi:github" />
+    Contribute to the project by submitting a pull request.
+    <LinkButton href="https://github.com/timmo001/go-automate" variant="secondary" target="_blank" rel="noopener noreferrer">
+      View repository
+    </LinkButton>
+  </LandingCard>
+  <LandingCard title="Install from the AUR">
+    <Icon slot="icon" name="mdi:package-variant" />
+    Arch users can install the latest development build from the AUR.
+    <LinkButton href="https://aur.archlinux.org/packages/go-automate-git" variant="secondary" target="_blank" rel="noopener noreferrer">
+      go-automate-git
+    </LinkButton>
+  </LandingCard>
+</CardGrid>

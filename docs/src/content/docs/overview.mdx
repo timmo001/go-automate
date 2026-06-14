@@ -1,0 +1,56 @@
+---
+title: Overview
+description: Guides and reference for installing, configuring, and using Go Automate.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+export const gettingStarted = [
+  { title: 'Install', href: '/install/', description: 'Install Go Automate from the AUR or build it from source.' },
+  { title: 'Configuration', href: '/configuration/', description: 'Point Go Automate at your Home Assistant URL and token.' },
+  { title: 'Running the Bridge', href: '/running/', description: 'Run the Home Assistant bridge as a systemd user service.' },
+];
+
+export const usingCards = [
+  { title: 'CLI', href: '/using/cli/', description: 'Run tasks and control Home Assistant from the command line.' },
+  { title: 'TUI', href: '/using/tui/', description: 'Browse and run commands from an interactive terminal menu.' },
+  { title: 'Home Assistant', href: '/using/home-assistant/', description: 'Control lights, switches, input booleans and assist satellites.' },
+  { title: 'Watching Entities', href: '/using/watching/', description: 'Stream entity state changes into scripts and status bars.' },
+  { title: 'Notifications', href: '/using/notifications/', description: 'Send desktop notifications with notify-send.' },
+];
+
+export const referenceCards = [
+  { title: 'Overview', href: '/reference/', description: 'How the command tree and the bridge fit together.' },
+  { title: 'Commands', href: '/reference/commands/', description: 'Every command, alias and flag in one place.' },
+  { title: 'Bridge Protocol', href: '/reference/bridge/', description: 'The Unix socket JSON protocol the bridge speaks.' },
+];
+
+export const llmsCards = [
+  { title: 'LLMs', href: '/llms/', description: 'Feed the documentation to an agent using llms.txt.' },
+];
+
+Go Automate runs on your machine and bridges your shortcuts and scripts to Home Assistant. Use these guides to get set up and start automating.
+
+## Getting Started
+
+<CardGrid>
+  {gettingStarted.map((card) => <LinkCard key={card.href} {...card} />)}
+</CardGrid>
+
+## Using
+
+<CardGrid>
+  {usingCards.map((card) => <LinkCard key={card.href} {...card} />)}
+</CardGrid>
+
+## Reference
+
+<CardGrid>
+  {referenceCards.map((card) => <LinkCard key={card.href} {...card} />)}
+</CardGrid>
+
+## LLMs
+
+<CardGrid>
+  {llmsCards.map((card) => <LinkCard key={card.href} {...card} />)}
+</CardGrid>

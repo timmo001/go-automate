@@ -1,0 +1,79 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props {
+  title: string;
+  class?: HTMLAttributes<'article'>['class'];
+}
+
+const { title, class: className } = Astro.props;
+const hasIcon = Astro.slots.has('icon');
+---
+
+<article class={['ga-card sl-flex', className].filter(Boolean).join(' ')}>
+  <p class="ga-card-title sl-flex">
+    {hasIcon && (
+      <span class="ga-card-icon" aria-hidden="true">
+        <slot name="icon" />
+      </span>
+    )}
+    <span set:html={title} />
+  </p>
+  <div class="ga-card-body"><slot /></div>
+</article>
+
+<style>
+  @layer starlight.components {
+    .ga-card {
+      --ga-card-border: var(--sl-color-purple);
+      --ga-card-bg: var(--sl-color-purple-low);
+      border: 1px solid var(--sl-color-gray-5);
+      background-color: var(--sl-color-black);
+      padding: clamp(1rem, calc(0.125rem + 3vw), 2.5rem);
+      flex-direction: column;
+      gap: clamp(0.5rem, calc(0.125rem + 1vw), 1rem);
+    }
+    .ga-card:nth-child(4n + 1) {
+      --ga-card-border: var(--sl-color-orange);
+      --ga-card-bg: var(--sl-color-orange-low);
+    }
+    .ga-card:nth-child(4n + 3) {
+      --ga-card-border: var(--sl-color-green);
+      --ga-card-bg: var(--sl-color-green-low);
+    }
+    .ga-card:nth-child(4n + 4) {
+      --ga-card-border: var(--sl-color-red);
+      --ga-card-bg: var(--sl-color-red-low);
+    }
+    .ga-card:nth-child(4n + 5) {
+      --ga-card-border: var(--sl-color-blue);
+      --ga-card-bg: var(--sl-color-blue-low);
+    }
+    .ga-card-title {
+      font-weight: 600;
+      font-size: var(--sl-text-h4);
+      color: var(--sl-color-white);
+      line-height: var(--sl-line-height-headings);
+      gap: 1rem;
+      align-items: center;
+    }
+    .ga-card-icon {
+      background-color: var(--sl-color-gray-6);
+      padding: 0.2em;
+      border-radius: 0.25rem;
+      flex-shrink: 0;
+      color: var(--ga-card-border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ga-card-icon :global(svg) {
+      width: 1.333em;
+      height: 1.333em;
+    }
+    .ga-card-body {
+      margin: 0;
+      font-size: var(--sl-text-body);
+    }
+  }
+</style>

@@ -1,0 +1,33 @@
+---
+title: Reference
+description: How the Go Automate command tree and the Home Assistant bridge fit together.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Go Automate is a command-line tool built on [urfave/cli](https://cli.urfave.org). It talks
+to Home Assistant over the WebSocket API and runs a local bridge that shares a single
+connection with every watcher on your machine.
+
+## Sections
+
+- [Commands](/reference/commands/): every command, alias and flag.
+- [Bridge Protocol](/reference/bridge/): the Unix socket JSON protocol the bridge speaks.
+
+<CardGrid>
+  <LinkCard title="Commands" href="/reference/commands/" description="The full command tree with flags and aliases." />
+  <LinkCard title="Bridge Protocol" href="/reference/bridge/" description="The socket actions and responses behind the bridge." />
+</CardGrid>
+
+## How it connects
+
+When you run a command that needs Home Assistant, Go Automate:
+
+1. Loads your [configuration](/configuration/) (URL and token).
+2. Opens a WebSocket to `/<scheme>://<host>/api/websocket` and authenticates with the token.
+3. Sends the request (a service call, a state read, or an event subscription).
+
+The [bridge](/running/) does the same upstream connection once and keeps it open, then
+serves cached state and live updates to local clients over a Unix socket. This keeps many
+watchers cheap: they connect to the socket instead of each opening their own WebSocket to
+Home Assistant.

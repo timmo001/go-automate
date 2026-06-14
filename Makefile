@@ -1,6 +1,7 @@
 RM=rm -f
 OUT=go-automate
 TUI_OUT=go-automate-tui
+DOCS_DIR=docs
 VERSION=$(shell sh -c 'version=$$(git describe --long --tags --abbrev=7 2>/dev/null || printf "r%s.%s" "$$(git rev-list --count HEAD)" "$$(git rev-parse --short=7 HEAD)"); printf "%s" "$$version" | sed "s/^v//;s/\([^-]*-g\)/r\1/;s/-/./g"')
 
 build: clean
@@ -20,6 +21,20 @@ run: build
 run-tui: build_tui
 	./$(TUI_OUT)
 
+docs: docs_dev
+
+docs_dev:
+	cd $(DOCS_DIR) && pnpm install && pnpm dev
+
+docs_build:
+	cd $(DOCS_DIR) && pnpm install && pnpm build
+
+docs_preview:
+	cd $(DOCS_DIR) && pnpm install && pnpm preview
+
+docs_deps:
+	cd $(DOCS_DIR) && pnpm install
+
 test: test_go
 
 test_go:
@@ -38,6 +53,7 @@ clean:
 deps:
 	go mod tidy
 	cd tui && bun install
+	cd $(DOCS_DIR) && pnpm install
 
 version: build
 	./$(OUT) version
@@ -59,6 +75,10 @@ help:
 	@echo "  install                  Install the application"
 	@echo "  run                      Build and run the application"
 	@echo "  run-tui                  Build and run the TUI directly"
+	@echo "  docs                     Run the documentation dev server"
+	@echo "  docs_build               Build the documentation site"
+	@echo "  docs_preview             Preview the built documentation site"
+	@echo "  docs_deps                Install documentation dependencies"
 	@echo "  test                     Run tests"
 	@echo "  lint                     Run Go linters (fmt, vet)"
 	@echo "  clean                    Remove build artifacts"

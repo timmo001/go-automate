@@ -1,0 +1,80 @@
+---
+title: Configuration
+description: Point Go Automate at your Home Assistant URL and long-lived access token.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Go Automate reads its configuration from a single YAML file. It needs your Home Assistant
+URL and a long-lived access token to connect.
+
+## Config file location
+
+The config file is `config.yml` inside the Go Automate config directory. The directory is
+resolved in this order:
+
+- `$XDG_CONFIG_HOME/go-automate` if `XDG_CONFIG_HOME` is set.
+- `~/.config/go-automate` otherwise.
+
+So on a typical Linux setup the file lives at `~/.config/go-automate/config.yml`.
+
+:::note
+The config is stored per user. Run Go Automate as the same user that runs the
+[bridge](/running/) so they share one config file.
+:::
+
+## Config format
+
+```yaml title="~/.config/go-automate/config.yml"
+homeassistant:
+  url: http://homeassistant.local:8123
+  token: your-long-lived-access-token
+```
+
+- `homeassistant.url` — the base URL of your Home Assistant instance. Defaults to
+  `http://homeassistant.local:8123`. Use `https://` for TLS; Go Automate connects over
+  `ws://` or `wss://` automatically based on the scheme.
+- `homeassistant.token` — a Home Assistant long-lived access token.
+
+## First-run setup
+
+If the token is empty when you start Go Automate in an interactive terminal, it walks you
+through a short setup form and writes the file for you.
+
+<Steps>
+
+1. Run the app in a terminal:
+
+   ```bash
+   go-automate
+   ```
+
+2. Enter your Home Assistant URL and long-lived access token when prompted.
+
+3. Go Automate saves `config.yml` and continues.
+
+</Steps>
+
+:::caution
+In a non-interactive session (for example a systemd service) Go Automate cannot prompt
+you. If the token is missing it exits with an error telling you to configure the file or
+run it interactively once. Always run it interactively first, or write `config.yml`
+yourself, before enabling the [bridge service](/running/).
+:::
+
+## Creating a long-lived access token
+
+<Steps>
+
+1. In Home Assistant, open your profile (click your username in the sidebar).
+2. Go to the **Security** tab and scroll to **Long-lived access tokens**.
+3. Select **Create token**, give it a name such as `go-automate`, and copy the value.
+
+</Steps>
+
+The token is shown only once, so paste it straight into your config or the setup form.
+
+## Next steps
+
+- [Run the bridge](/running/) so watchers and status bars stay cheap on the network.
+- Start controlling [Home Assistant](/using/home-assistant/).

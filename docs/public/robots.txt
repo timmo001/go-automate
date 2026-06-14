@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://go-automate.timmo.dev/sitemap-index.xml

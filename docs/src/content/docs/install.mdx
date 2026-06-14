@@ -1,0 +1,83 @@
+---
+title: Install
+description: Install Go Automate from the AUR or build it from source.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Go Automate is a Linux-first command-line tool. You can install it from the AUR on Arch, or build it from source on any platform with a Go toolchain.
+
+## Prerequisites
+
+- [Go](https://go.dev/dl/) 1.23 or newer to build from source.
+- `notify-send` (from `libnotify`) for the [notify](/using/notifications/) command.
+- Optionally, a terminal emulator (`foot`, `alacritty`, `kitty`, `ghostty` or `xterm`) so the [TUI](/using/tui/) can open in its own window.
+- For building the Arch package locally: `base-devel` and an AUR helper such as `yay`.
+
+## Install
+
+<Tabs syncKey="install">
+  <TabItem label="Arch Linux">
+    Install the latest development build from the AUR package
+    [go-automate-git](https://aur.archlinux.org/packages/go-automate-git). It builds and
+    installs from the latest `main` branch, which is updated on every commit.
+
+    ```bash
+    yay -S go-automate-git
+    ```
+
+    Alternatively, build a local package from a checkout and install it:
+
+    ```bash
+    make create_arch
+    yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst
+    ```
+  </TabItem>
+  <TabItem label="Build from source">
+    <Steps>
+
+    1. Clone the [repository](https://github.com/timmo001/go-automate):
+
+       ```bash
+       git clone https://github.com/timmo001/go-automate.git
+       cd go-automate
+       ```
+
+    2. Build the binary:
+
+       ```bash
+       go build
+       ```
+
+       Or use the Makefile to build the app and the [TUI](/using/tui/) together:
+
+       ```bash
+       make build_all
+       ```
+
+    3. Move the binary somewhere on your `PATH`, for example:
+
+       ```bash
+       install -Dm755 go-automate ~/.local/bin/go-automate
+       ```
+
+    </Steps>
+  </TabItem>
+</Tabs>
+
+## What the Arch package installs
+
+The Arch package installs:
+
+- `/usr/bin/go-automate` — the main binary.
+- `/usr/lib/systemd/user/go-automate-home-assistant-bridge.service` — the [bridge](/running/) user service.
+
+The post-install script enables the bridge service globally for future logins and tries to
+start it for the installing user when they have an active systemd user session. See
+[Running the Bridge](/running/) to finish setup.
+
+## Next steps
+
+- [Configure](/configuration/) your Home Assistant URL and token.
+- [Run the bridge](/running/) as a user service.
+- Explore the [CLI](/using/cli/) and the [TUI](/using/tui/).
