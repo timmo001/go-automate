@@ -67,9 +67,6 @@ export default defineConfig({
           actions: ['copy', 'view'],
         }),
       ],
-      components: {
-        PageFrame: './src/components/PageFrame.astro',
-      },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/timmo001/go-automate' },
       ],
