@@ -7,14 +7,17 @@ import starlightLlmsTxt from 'starlight-llms-txt';
 import starlightContextualMenu from 'starlight-contextual-menu';
 import starlightLinksValidator from 'starlight-links-validator';
 import rehypeExternalLinks from 'rehype-external-links';
+import { unified } from '@astrojs/markdown-remark';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://go-automate.timmo.dev',
   markdown: {
-    rehypePlugins: [
-      [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
-    ],
+    processor: unified({
+      rehypePlugins: [
+        [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+      ],
+    }),
   },
   integrations: [
     icon(),
