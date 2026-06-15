@@ -6,18 +6,11 @@
     "group:recommended"
   ],
   "dependencyDashboard": true,
-  "labels": [
-    "dependencies"
-  ],
+  "labels": ["dependencies"],
   "lockFileMaintenance": {
     "enabled": true
   },
   "packageRules": [
-    {
-      "description": "Group documentation site (Astro/Starlight) dependencies.",
-      "groupName": "docs site",
-      "matchFileNames": ["docs/**"]
-    },
     {
       "description": "Group GitHub Actions.",
       "groupName": "github actions",
