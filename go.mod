@@ -1,6 +1,6 @@
 module github.com/timmo001/go-automate
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/charmbracelet/huh v0.6.0
