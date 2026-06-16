@@ -29,6 +29,9 @@ type Bridge struct {
 	subscriberMu sync.Mutex
 	nextSubID    uint64
 	subscribers  map[string]map[uint64]chan HomeAssistantState
+
+	namerMu sync.RWMutex
+	namer   *EntityNamer
 }
 
 type BridgeRequest struct {
@@ -40,6 +43,7 @@ type BridgeResponse struct {
 	Type     string              `json:"type"`
 	EntityID string              `json:"entity_id,omitempty"`
 	State    *HomeAssistantState `json:"state,omitempty"`
+	Name     string              `json:"name,omitempty"`
 	Error    string              `json:"error,omitempty"`
 	Meta     map[string]string   `json:"meta,omitempty"`
 }
@@ -151,6 +155,8 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 			continue
 		}
 
+		bridge.refreshNamer(conn)
+
 		response, err := conn.SubscribeEvents("state_changed")
 		if err != nil {
 			log.Errorf("Error subscribing to Home Assistant events: %v", err)
@@ -246,6 +252,49 @@ func (bridge *Bridge) getState(entityID string) (HomeAssistantState, bool) {
 	return state, ok
 }
 
+// refreshNamer fetches the entity and device registries and rebuilds the
+// structured-name resolver. Naming is best-effort: a failure here leaves the
+// previous namer in place and falls back to friendly names downstream.
+func (bridge *Bridge) refreshNamer(conn *HomeAssistantConn) {
+	display, err := conn.GetEntityRegistryDisplay()
+	if err != nil {
+		log.Warnf("Error fetching entity registry for naming: %v", err)
+		return
+	}
+
+	devices, err := conn.GetDeviceRegistry()
+	if err != nil {
+		log.Warnf("Error fetching device registry for naming: %v", err)
+		return
+	}
+
+	namer := NewEntityNamer(display, devices)
+
+	bridge.namerMu.Lock()
+	bridge.namer = namer
+	bridge.namerMu.Unlock()
+
+	log.Infof("Home Assistant bridge cached naming for %d entities", len(display.Entities))
+}
+
+// displayName resolves the structured display name for a state, falling back to
+// the entity's friendly name when registry data is unavailable.
+func (bridge *Bridge) displayName(state *HomeAssistantState) string {
+	if state == nil {
+		return ""
+	}
+
+	bridge.namerMu.RLock()
+	namer := bridge.namer
+	bridge.namerMu.RUnlock()
+
+	if namer == nil {
+		return state.FriendlyName()
+	}
+
+	return namer.DisplayName(state.EntityID, state.FriendlyName())
+}
+
 func (bridge *Bridge) storeState(state HomeAssistantState) {
 	bridge.stateMu.Lock()
 	bridge.states[state.EntityID] = state
@@ -338,6 +387,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 			Type:     "snapshot",
 			EntityID: request.EntityID,
 			State:    &stateCopy,
+			Name:     bridge.displayName(&stateCopy),
 		}); err != nil {
 			logBridgeWriteError("Error writing bridge snapshot response", err)
 		}
@@ -356,6 +406,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 				Type:     "snapshot",
 				EntityID: request.EntityID,
 				State:    &stateCopy,
+				Name:     bridge.displayName(&stateCopy),
 			}); err != nil {
 				logBridgeWriteError("Error writing bridge snapshot response", err)
 				return
@@ -372,6 +423,7 @@ func (bridge *Bridge) handleClient(ctx context.Context, conn net.Conn) {
 					Type:     "state_changed",
 					EntityID: request.EntityID,
 					State:    &stateCopy,
+					Name:     bridge.displayName(&stateCopy),
 				}); err != nil {
 					logBridgeWriteError("Error writing bridge event response", err)
 					return
@@ -422,7 +474,7 @@ func BridgeWatchEntity(
 	ctx context.Context,
 	socketPath string,
 	entityID string,
-	onState func(*HomeAssistantState) error,
+	onState func(*HomeAssistantState, string) error,
 ) error {
 	if socketPath == "" {
 		var err error
@@ -468,7 +520,7 @@ func BridgeWatchEntity(
 				continue
 			}
 
-			if err := onState(response.State); err != nil {
+			if err := onState(response.State, response.Name); err != nil {
 				resultCh <- result{err: err}
 				return
 			}

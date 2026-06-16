@@ -44,8 +44,54 @@ type HomeAssistantCallServiceRequest struct {
 }
 
 type HomeAssistantState struct {
-	EntityID string `json:"entity_id"`
-	State    string `json:"state"`
+	EntityID   string                     `json:"entity_id"`
+	State      string                     `json:"state"`
+	Attributes map[string]json.RawMessage `json:"attributes,omitempty"`
+}
+
+// FriendlyName returns the entity's friendly_name attribute, or an empty
+// string when it is absent. Used as the fallback name when structured
+// registry naming is unavailable.
+func (state *HomeAssistantState) FriendlyName() string {
+	if state == nil {
+		return ""
+	}
+
+	raw, ok := state.Attributes["friendly_name"]
+	if !ok {
+		return ""
+	}
+
+	var name string
+	if err := json.Unmarshal(raw, &name); err != nil {
+		return ""
+	}
+
+	return name
+}
+
+// EntityRegistryDisplayEntry is a single entity from
+// config/entity_registry/list_for_display. The backend pre-resolves the
+// entity-specific display name (including translation keys) into the en field.
+type EntityRegistryDisplayEntry struct {
+	EntityID      string `json:"ei"`
+	DeviceID      string `json:"di"`
+	Name          string `json:"en"`
+	Platform      string `json:"pl"`
+	HasEntityName bool   `json:"hn"`
+}
+
+// EntityRegistryDisplayResponse is the result of
+// config/entity_registry/list_for_display.
+type EntityRegistryDisplayResponse struct {
+	Entities []EntityRegistryDisplayEntry `json:"entities"`
+}
+
+// DeviceRegistryEntry is a single device from config/device_registry/list.
+type DeviceRegistryEntry struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	NameByUser string `json:"name_by_user"`
 }
 
 type HomeAssistantEventMessage struct {
@@ -219,6 +265,34 @@ func (conn *HomeAssistantConn) GetState(entityID string) (*HomeAssistantState, e
 	}
 
 	return nil, nil
+}
+
+func (conn *HomeAssistantConn) GetEntityRegistryDisplay() (EntityRegistryDisplayResponse, error) {
+	request := HomeAssistantRequest{
+		ID:   RandomID(),
+		Type: "config/entity_registry/list_for_display",
+	}
+
+	var response HomeAssistantResponse[EntityRegistryDisplayResponse]
+	if err := conn.sendRequestInto(request, false, &response); err != nil {
+		return EntityRegistryDisplayResponse{}, fmt.Errorf("get entity registry display: %w", err)
+	}
+
+	return response.Result, nil
+}
+
+func (conn *HomeAssistantConn) GetDeviceRegistry() ([]DeviceRegistryEntry, error) {
+	request := HomeAssistantRequest{
+		ID:   RandomID(),
+		Type: "config/device_registry/list",
+	}
+
+	var response HomeAssistantResponse[[]DeviceRegistryEntry]
+	if err := conn.sendRequestInto(request, false, &response); err != nil {
+		return nil, fmt.Errorf("get device registry: %w", err)
+	}
+
+	return response.Result, nil
 }
 
 func (conn *HomeAssistantConn) SubscribeEvents(eventType string) (HomeAssistantResponse[any], error) {

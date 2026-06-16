@@ -421,8 +421,8 @@ func watchEntityViaBridge(
 	entityID string,
 	options entityWatchOutputOptions,
 ) error {
-	return homeassistant.BridgeWatchEntity(ctx, socketPath, entityID, func(state *homeassistant.HomeAssistantState) error {
-		printEntityState(state, options)
+	return homeassistant.BridgeWatchEntity(ctx, socketPath, entityID, func(state *homeassistant.HomeAssistantState, name string) error {
+		printEntityState(state, name, options)
 		return nil
 	})
 }
@@ -436,7 +436,7 @@ func watchEntityDirect(entityID string, options entityWatchOutputOptions) error 
 		return err
 	}
 	if initialState != nil {
-		printEntityState(initialState, options)
+		printEntityState(initialState, initialState.FriendlyName(), options)
 	}
 
 	resp, err := conn.SubscribeEvents("state_changed")
@@ -460,7 +460,7 @@ func watchEntityDirect(entityID string, options entityWatchOutputOptions) error 
 			continue
 		}
 
-		printEntityState(event.Event.Data.NewState, options)
+		printEntityState(event.Event.Data.NewState, event.Event.Data.NewState.FriendlyName(), options)
 	}
 }
 
@@ -487,7 +487,7 @@ func appendBarText(baseText string, label string) string {
 	return fmt.Sprintf("%s %s", baseText, label)
 }
 
-func printEntityState(state *homeassistant.HomeAssistantState, options entityWatchOutputOptions) {
+func printEntityState(state *homeassistant.HomeAssistantState, name string, options entityWatchOutputOptions) {
 	if options.BarJSON {
 		text := state.State
 		tooltip := state.State
@@ -528,16 +528,21 @@ func printEntityState(state *homeassistant.HomeAssistantState, options entityWat
 			}
 		}
 
-		payload, err := json.Marshal(map[string]string{
+		payload := map[string]string{
 			"text":    text,
 			"tooltip": tooltip,
 			"class":   className,
-		})
+		}
+		if name != "" {
+			payload["name"] = name
+		}
+
+		encoded, err := json.Marshal(payload)
 		if err != nil {
 			log.Fatalf("error marshalling bar JSON payload: %v", err)
 		}
 
-		fmt.Println(string(payload))
+		fmt.Println(string(encoded))
 		return
 	}
 
