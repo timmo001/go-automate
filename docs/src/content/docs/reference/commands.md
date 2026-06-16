@@ -29,7 +29,7 @@ to a direct WebSocket connection if the bridge is unavailable. Prefer
 
 | Flag | Effect |
 | --- | --- |
-| `--bar-json` | Emit JSON lines (`text`, `tooltip`, `class`) for status bars. |
+| `--bar-json` | Emit JSON lines (`text`, `tooltip`, `class`, and an optional `name`) for status bars. |
 | `--icon` | Text/icon to show for the state in bar JSON mode. |
 | `--text-on` | Text appended when the state is `on`. |
 | `--text-off` | Text appended when the state is not `on`. |

@@ -58,8 +58,9 @@ go-automate ha watch entity sensor.living_room_temperature --direct
 ## Status bars
 
 Add `--bar-json` to emit machine-readable JSON lines instead of plain text. Each line is an
-object with `text`, `tooltip` and `class` that any status bar, shell or script can consume,
-including [Waybar](https://github.com/Alexays/Waybar) and [Quickshell](https://quickshell.org/).
+object with `text`, `tooltip` and `class`, plus an optional `name` (the entity's display
+name), that any status bar, shell or script can consume, including
+[Waybar](https://github.com/Alexays/Waybar) and [Quickshell](https://quickshell.org/).
 See [Bar JSON](/reference/bar-json/) for the full output contract and every flag.
 
 ```bash

@@ -47,14 +47,18 @@ object, and the bridge replies with one or more response objects on the same con
   "state": {
     "entity_id": "light.bedroom_lamp",
     "state": "on"
-  }
+  },
+  "name": "Bedroom Lamp"
 }
 ```
 
-- `type`: the response type — `snapshot`, `state_changed`, or `error`.
+- `type`: the response type, one of `snapshot`, `state_changed`, or `error`.
 - `entity_id`: the entity the response relates to.
-- `state`: an object with `entity_id` and the `state` string, or `null` if the bridge has no
-  cached state for that entity.
+- `state`: an object with `entity_id`, the `state` string, and any `attributes`, or `null` if
+  the bridge has no cached state for that entity.
+- `name`: the entity's structured display name (device and entity name combined), resolved
+  from the registries. Omitted when no name can be resolved. See
+  [Bar JSON](/reference/bar-json/) for the naming model.
 - `error`: a human-readable message, present only when `type` is `error`.
 
 ## Actions
@@ -86,7 +90,8 @@ A change then arrives as:
 {
   "type": "state_changed",
   "entity_id": "light.bedroom_lamp",
-  "state": { "entity_id": "light.bedroom_lamp", "state": "off" }
+  "state": { "entity_id": "light.bedroom_lamp", "state": "off" },
+  "name": "Bedroom Lamp"
 }
 ```
 
@@ -110,6 +115,8 @@ Errors are returned when:
 ## Upstream behaviour
 
 The bridge dials Home Assistant, authenticates with your token, reads all states once to
-build its cache, then subscribes to `state_changed` events. If the connection drops it
-reconnects every five seconds and re-broadcasts a fresh snapshot to active watchers, so
-clients recover automatically.
+build its cache, then subscribes to `state_changed` events. On each connection it also fetches
+the entity and device registries once and caches them to resolve entity names, so adding the
+`name` field costs no extra request per watcher. If the connection drops it reconnects every
+five seconds, refreshes the registries, and re-broadcasts a fresh snapshot to active watchers,
+so clients recover automatically.

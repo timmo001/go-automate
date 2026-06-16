@@ -23,10 +23,11 @@ JSON.
 
 ## Output shape
 
-Every line is a JSON object with exactly three string fields, always present:
+Every line is a JSON object. Three string fields are always present, and an optional
+`name` field is added when Go Automate can resolve the entity's name:
 
 ```json
-{ "text": "Guest", "tooltip": "Guest mode is on", "class": "active" }
+{ "text": "437", "tooltip": "437", "class": "437", "name": "Living Room Thermostat Temperature" }
 ```
 
 | Field | Purpose |
@@ -34,10 +35,13 @@ Every line is a JSON object with exactly three string fields, always present:
 | `text` | The label to render. |
 | `tooltip` | The hover tooltip. |
 | `class` | A class name for styling. |
+| `name` | Optional. The entity's display name, with the device and entity name combined. Omitted when no name can be resolved. |
 
-The field names match Waybar's custom-module schema (`"return-type": "json"`), but the object
-is plain JSON. Any consumer can read the line and use whichever fields it supports, so the
-same command drives a Waybar module, a Quickshell widget or a custom script.
+The `text`, `tooltip` and `class` field names match Waybar's custom-module schema
+(`"return-type": "json"`), but the object is plain JSON. `name` is an extra field beyond
+Waybar's schema, so bars that do not use it ignore it. Any consumer can read the line and use
+whichever fields it supports, so the same command drives a Waybar module, a Quickshell widget
+or a custom script.
 
 ## How the fields are derived
 
@@ -64,6 +68,16 @@ All three fields default to the raw entity state. The output flags then refine t
 
 Any flag you leave unset keeps the field at its default, so a minimal `--bar-json` run still
 produces valid output built from the raw state.
+
+**The `name` field:**
+
+`name` is the entity's structured display name, following Home Assistant's entity naming
+model: the device name and the entity-specific name combined (for example
+`Living Room Thermostat Temperature`). The bridge watcher resolves it from the entity and
+device registries, which it fetches and caches when it connects to Home Assistant, so no
+extra request is made per watcher. The direct watcher (`ha watch entity --direct`) falls back
+to the entity's `friendly_name`. When no name can be resolved, the field is omitted rather
+than emitted empty, and the flags above never change it.
 
 ## Flags
 
