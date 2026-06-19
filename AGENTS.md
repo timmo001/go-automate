@@ -8,12 +8,16 @@
 - Verify doc edits build with `pnpm build` from the `docs/` directory.
 
 ## Build & Test Commands
-- Build: `go build`
-- Package (Arch): `make create_arch`
+- Toolchain: `mise install` provisions Go, Bun, Node and pnpm from `mise.toml`; list tasks with `mise tasks`
+- Build: `mise run build` (plain `go build` also works)
+- Build app + TUI: `mise run build:all`
+- Package (Arch): `mise run package:arch`
 - Install (Arch): `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
-- Run: `go run main.go [command]`
-- Format: `go fmt ./...`
-- Update deps: `go mod tidy`
+- Run: `mise run run` (or `go run main.go [command]`)
+- Test: `mise run test`
+- Lint/format: `mise run lint` (`go fmt ./...` + `go vet ./...`)
+- Docs: `mise run docs:dev`, `mise run docs:build`
+- Update deps: `mise run deps` (or `go mod tidy`)
 - No tests currently exist in codebase
 
 ## Code Style & Conventions

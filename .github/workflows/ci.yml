@@ -20,20 +20,15 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for version calculation
 
-      - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c  # v6
-        with:
-          go-version: '1.26'
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2
+      - name: Set up mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d  # v4.2.0
 
       - name: Build Go app and TUI
         run: |
           # Fix git ownership for VCS stamping
           git config --global --add safe.directory "$(pwd)"
 
-          make build_all
+          mise run build:all
 
   update-aur:
     name: Update AUR (go-automate-git)
@@ -49,10 +44,8 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for version calculation
 
-      - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c  # v6
-        with:
-          go-version: '1.26'
+      - name: Set up mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d  # v4.2.0
 
       - name: Test build
         run: |
@@ -61,7 +54,7 @@ jobs:
           # Fix git ownership for VCS stamping in container
           git config --global --add safe.directory "$(pwd)"
 
-          go build -v .
+          mise run build
 
       - name: Update AUR package
         env:

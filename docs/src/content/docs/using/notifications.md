@@ -36,7 +36,7 @@ Because it is a single command, `notify` slots into scripts, build steps and key
 shortcuts:
 
 ```bash
-make build && go-automate notify "Build complete" || go-automate notify "Build failed"
+mise run build && go-automate notify "Build complete" || go-automate notify "Build failed"
 ```
 
 :::note

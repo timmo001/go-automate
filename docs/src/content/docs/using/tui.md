@@ -54,7 +54,7 @@ The TUI is built with [Bun](https://bun.sh) and [OpenTUI](https://github.com/sst
 Build it alongside the main binary:
 
 ```bash
-make build_all
+mise run build:all
 ```
 
 Or build just the TUI from the `tui/` directory:

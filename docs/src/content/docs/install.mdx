@@ -9,7 +9,7 @@ Go Automate is a Linux-first command-line tool. You can install it from the AUR 
 
 ## Prerequisites
 
-- [Go](https://go.dev/dl/) 1.23 or newer to build from source.
+- [Go](https://go.dev/dl/) 1.23 or newer to build from source. [mise](https://mise.jdx.dev) can provision the whole toolchain (Go, Bun, Node, pnpm) from `mise.toml`.
 - `notify-send` (from `libnotify`) for the [notify](/using/notifications/) command.
 - Optionally, a terminal emulator (`foot`, `alacritty`, `kitty`, `ghostty` or `xterm`) so the [TUI](/using/tui/) can open in its own window.
 - For building the Arch package locally: `base-devel` and an AUR helper such as `yay`.
@@ -29,7 +29,7 @@ Go Automate is a Linux-first command-line tool. You can install it from the AUR 
     Alternatively, build a local package from a checkout and install it:
 
     ```bash
-    make create_arch
+    mise run package:arch
     yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst
     ```
   </TabItem>
@@ -49,10 +49,12 @@ Go Automate is a Linux-first command-line tool. You can install it from the AUR 
        go build
        ```
 
-       Or use the Makefile to build the app and the [TUI](/using/tui/) together:
+       Or use [mise](https://mise.jdx.dev) to provision the toolchain and build the app
+       and the [TUI](/using/tui/) together:
 
        ```bash
-       make build_all
+       mise install
+       mise run build:all
        ```
 
     3. Move the binary somewhere on your `PATH`, for example:

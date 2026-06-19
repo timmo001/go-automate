@@ -30,7 +30,7 @@ if [ ! -f "go-automate" ]; then
 fi
 
 if [ ! -f "go-automate-tui" ]; then
-  echo "go-automate-tui not found, please build the TUI first (make build_tui)"
+  echo "go-automate-tui not found, please build the TUI first (mise run build:tui)"
   exit 1
 fi
 
