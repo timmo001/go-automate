@@ -1,6 +1,6 @@
 [tools]
 go = "1.26.4"
-node = "24.17.0"
+node = "24.18.0"
 bun = "1.3.14"
 # pnpm 11.8.0 is installed via the npm backend: the aqua backend ships a
 # broken linux asset name for this release.
