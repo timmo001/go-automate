@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/viper v1.21.0
-	github.com/urfave/cli/v3 v3.10.0
+	github.com/urfave/cli/v3 v3.10.1
 	golang.org/x/term v0.44.0
 )
 
