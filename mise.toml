@@ -51,6 +51,10 @@ run = "pitchfork status"
 description = "Follow Home Assistant bridge logs"
 run = "pitchfork logs -t ha-bridge"
 
+[tasks."serve:restart"]
+description = "Restart the pitchfork Home Assistant bridge"
+run = "pitchfork restart ha-bridge"
+
 [tasks."serve:stop"]
 description = "Stop the pitchfork Home Assistant bridge"
 run = "pitchfork stop ha-bridge"
