@@ -15,7 +15,9 @@
 - Install (Arch): `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
 - Run: `mise run run` (or `go run main.go [command]`)
 - Test: `mise run test`
-- Lint/format: `mise run lint` (`go fmt ./...` + `go vet ./...`)
+- Lint/format: `mise run lint:go` (`go fmt ./...` + `go vet ./...`); `mise run lint:all` also lints docs (`mise run docs:lint`)
+- Check (lint + test): `mise run check`
+- Install (go install): `mise run install`
 - Docs: `mise run docs:dev`, `mise run docs:build`
 - Update deps: `mise run deps` (or `go mod tidy`)
 - No tests currently exist in codebase
