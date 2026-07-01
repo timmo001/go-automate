@@ -46,6 +46,15 @@ cp ../../.scripts/linux/PKGBUILD.binary PKGBUILD
 cp ../../.scripts/linux/go-automate-home-assistant-bridge.service go-automate-home-assistant-bridge.service
 cp ../../.scripts/linux/arch-package.install arch-package.install
 
+# Generate shell completion scripts from the built binary. A temporary
+# XDG_CONFIG_HOME keeps generation hermetic, and the completion guard in main.go
+# means this never prompts even when Home Assistant is unconfigured.
+COMPLETION_HOME="$(mktemp -d)"
+for shell in zsh bash fish; do
+  XDG_CONFIG_HOME="$COMPLETION_HOME" ./go-automate completion "$shell" >"go-automate.$shell"
+done
+rm -rf "$COMPLETION_HOME"
+
 # Sanitize VERSION for Arch pkgver
 ARCH_PKGVER=$(echo "$VERSION" | sed 's/[-+]/./g')
 export ARCH_PKGVER

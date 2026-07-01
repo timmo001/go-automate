@@ -73,6 +73,7 @@ The Arch package installs:
 
 - `/usr/bin/go-automate` — the main binary.
 - `/usr/lib/systemd/user/go-automate-home-assistant-bridge.service` — the [bridge](/running/) user service.
+- Shell completion scripts for zsh, bash, and fish, so tab completion works right after install. See [Shell completions](/using/completions/).
 
 The post-install script enables the bridge service globally for future logins and tries to
 start it for the installing user when they have an active systemd user session. See
@@ -83,3 +84,4 @@ start it for the installing user when they have an active systemd user session. 
 - [Configure](/configuration/) your Home Assistant URL and token.
 - [Run the bridge](/running/) as a user service.
 - Explore the [CLI](/using/cli/) and the [TUI](/using/tui/).
+- Set up [shell completions](/using/completions/) if you built from source.

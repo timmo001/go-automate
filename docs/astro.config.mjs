@@ -88,6 +88,7 @@ export default defineConfig({
             { label: 'Home Assistant', slug: 'using/home-assistant' },
             { label: 'Watching Entities', slug: 'using/watching' },
             { label: 'Notifications', slug: 'using/notifications' },
+            { label: 'Shell completions', slug: 'using/completions' },
           ],
         },
         {

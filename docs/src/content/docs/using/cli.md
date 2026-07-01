@@ -61,6 +61,7 @@ continues in CLI mode.
 ## Tips
 
 - Use the short aliases for shortcuts, for example `go-automate ha l toggle bedroom_lamp`.
+- Press <kbd>Tab</kbd> to complete commands, aliases, and flags. See [Shell completions](/using/completions/).
 - Entity commands take the entity name **without** its domain prefix. `go-automate ha light turn-on bedroom_lamp` acts on `light.bedroom_lamp`.
 - Wrap multi-word arguments in quotes, for example announce messages.
 

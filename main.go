@@ -21,7 +21,14 @@ import (
 var Version = "dev"
 
 func main() {
-	log.Info("------ Go Automate ------")
+	// Shell completion re-invokes the binary on every TAB press. Skip the
+	// banner and interactive setup so completion never prompts or blocks when
+	// Home Assistant is unconfigured, and so stdout stays clean for candidates.
+	completing := isShellCompletion()
+
+	if !completing {
+		log.Info("------ Go Automate ------")
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -30,16 +37,19 @@ func main() {
 
 	log.Debugf("Loaded config: %v", cfg)
 
-	cfg, err = cfg.Setup(isInteractiveSession())
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	if !completing {
+		cfg, err = cfg.Setup(isInteractiveSession())
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
 	}
 	homeassistant.Config = &cfg.HomeAssistant
 
 	cmd := &cli.Command{
-		Name:    "Go Automate",
-		Usage:   "Run common tasks",
-		Version: Version,
+		Name:                  "go-automate",
+		Usage:                 "Run common tasks",
+		Version:               Version,
+		EnableShellCompletion: true,
 		Commands: []*cli.Command{
 			{
 				Name:    "home-assistant",
@@ -173,11 +183,26 @@ func main() {
 		log.Fatalf("error running cmd: %v", err)
 	}
 
-	log.Info("------ Exiting ------")
+	if !completing {
+		log.Info("------ Exiting ------")
+	}
 }
 
 func isInteractiveSession() bool {
 	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+}
+
+// isShellCompletion reports whether this invocation is a shell completion pass,
+// either the runtime `--generate-shell-completion` flag emitted on every TAB or
+// the `completion` script generator command.
+func isShellCompletion() bool {
+	for _, arg := range os.Args[1:] {
+		if arg == "--generate-shell-completion" || arg == "completion" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func createToggleServiceCommands(domain string) []*cli.Command {
