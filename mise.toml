@@ -39,6 +39,22 @@ description = "Build and run the application"
 depends = ["build"]
 run = "./go-automate"
 
+[tasks."serve:ha-bridge"]
+description = "Start the Home Assistant bridge through pitchfork"
+run = "pitchfork start ha-bridge"
+
+[tasks."serve:status"]
+description = "Show pitchfork dev server status"
+run = "pitchfork status"
+
+[tasks."serve:logs"]
+description = "Follow Home Assistant bridge logs"
+run = "pitchfork logs -t ha-bridge"
+
+[tasks."serve:stop"]
+description = "Stop the pitchfork Home Assistant bridge"
+run = "pitchfork stop ha-bridge"
+
 [tasks."run:tui"]
 description = "Build and run the TUI directly"
 depends = ["build:tui"]

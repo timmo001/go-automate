@@ -1,0 +1,18 @@
+# Optional pitchfork (https://pitchfork.jdx.dev) dev-loop supervisor config.
+# Install once with `mise use -g pitchfork`, then:
+#   pitchfork start ha-bridge     # start the bridge in the background
+#   pitchfork status              # PID and state
+#   pitchfork logs -t ha-bridge   # follow logs
+#   pitchfork stop ha-bridge      # stop
+# Inert unless you run pitchfork; it does not affect builds or CI.
+#
+# The dev bridge and production bridge share one unix socket. The wrapper stops
+# the known production systemd user unit, also terminates whichever process
+# currently owns the socket, then restores the packaged service when dev exits.
+
+[daemons.ha-bridge]
+# Stop production by service and by socket owner, then run the dev bridge.
+run = ".scripts/linux/pitchfork-ha-bridge-dev.sh"
+# Socket is created at listen time; with production stopped, the dev bridge is
+# the sole owner. On macOS (no XDG_RUNTIME_DIR) point this at $TMPDIR instead.
+ready_cmd = 'test -S "$XDG_RUNTIME_DIR/go-automate/home-assistant.sock"'

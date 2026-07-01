@@ -14,6 +14,8 @@
 - Package (Arch): `mise run package:arch`
 - Install (Arch): `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
 - Run: `mise run run` (or `go run main.go [command]`)
+- Background bridge dev server: `mise run serve:ha-bridge` (pitchfork)
+- Pitchfork helpers: `mise run serve:status`, `mise run serve:logs`, `mise run serve:stop`
 - Test: `mise run test`
 - Lint/format: `mise run lint:go` (`go fmt ./...` + `go vet ./...`); `mise run lint:all` also lints docs (`mise run docs:lint`)
 - Check (lint + test): `mise run check`
@@ -38,3 +40,11 @@
 - Treat direct websocket watcher usage as exceptional: allow only for explicit troubleshooting (`--direct`) and surface a warning in CLI output/help text
 - In help and flag descriptions, strongly recommend bridge watch for lower network usage
 - When output is plain text (no `--bar-json`), warn users that machine consumers should prefer `--bar-json` JSON output
+
+## Background Dev Servers
+
+- Prefer `mise run serve:ha-bridge` over foreground `go-automate ha bridge serve` when starting the Home Assistant bridge from an agent or background workflow.
+- The pitchfork wrapper stops any production bridge that owns `$XDG_RUNTIME_DIR/go-automate/home-assistant.sock` (systemd, Hyprland, desktop autostart, or manual shell), runs the dev bridge, and restores the packaged `go-automate-home-assistant-bridge.service` when dev stops.
+- Use `mise run serve:status`, `mise run serve:logs`, and `mise run serve:stop` for status, logs, and cleanup.
+- Keep direct `mise run run` or `go run main.go ...` usage for foreground debugging only, or when pitchfork is unavailable.
+- The pitchfork config lives in `pitchfork.toml`; the wrapper script lives at `.scripts/linux/pitchfork-ha-bridge-dev.sh`.
