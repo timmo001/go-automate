@@ -111,11 +111,9 @@ export function createCommandRunner(
       });
 
       if (exitCode !== 0) {
-        return yield* Effect.fail(
-          new CommandRunnerError({
-            message: stderr.trim().split("\n")[0] || `Command failed (exit ${exitCode})`,
-          }),
-        );
+        return yield* new CommandRunnerError({
+          message: stderr.trim().split("\n")[0] || `Command failed (exit ${exitCode})`,
+        });
       }
 
       log(`Silent command completed: ${cmd}`);

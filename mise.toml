@@ -104,9 +104,17 @@ run = "pnpm dlx markdownlint-cli --config .markdownlint.json \"**/*.md\""
 description = "Run all linters (Go, docs)"
 depends = ["lint:go", "docs:lint"]
 
+[tasks."typecheck:tui"]
+description = "Typecheck the TUI (tsc via the Effect language service)"
+dir = "tui"
+run = '''
+bun install --frozen-lockfile
+bun run typecheck
+'''
+
 [tasks.check]
 description = "Run all linters and tests"
-depends = ["lint:all", "test"]
+depends = ["lint:all", "typecheck:tui", "test"]
 
 [tasks.clean]
 description = "Remove build artifacts"

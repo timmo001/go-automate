@@ -23,6 +23,9 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d  # v4.2.0
 
+      - name: Typecheck TUI
+        run: mise run typecheck:tui
+
       - name: Build Go app and TUI
         run: |
           # Fix git ownership for VCS stamping
