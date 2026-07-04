@@ -76,8 +76,10 @@ The Arch package installs:
 - Shell completion scripts for zsh, bash, and fish, so tab completion works right after install. See [Shell completions](/using/completions/).
 
 The post-install script enables the bridge service globally for future logins and tries to
-start it for the installing user when they have an active systemd user session. See
-[Running the Bridge](/running/) to finish setup.
+start it for the installing user when they have an active systemd user session. On upgrade,
+it restarts the bridge only if it is already running, so a running service picks up the new
+binary and one you stopped stays stopped. See [Running the Bridge](/running/) to finish
+setup.
 
 ## Next steps
 
