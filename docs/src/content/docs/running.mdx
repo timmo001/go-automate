@@ -77,7 +77,8 @@ When the Arch package upgrades, the post-upgrade hook restarts the bridge only i
 already running, so it picks up the new binary automatically. A service you stopped on
 purpose stays stopped. Because
 [`go-automate-git`](https://aur.archlinux.org/packages/go-automate-git) rebuilds from `main`
-on every commit, a running bridge tracks the latest build after each `yay -Syu`.
+when the app or Arch package inputs change, a running bridge tracks the latest packaged
+build after each `yay -Syu`.
 
 If you built from source, restart the service yourself once you have rebuilt the binary:
 
