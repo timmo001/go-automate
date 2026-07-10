@@ -9,6 +9,9 @@ on:
       - main
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
@@ -61,7 +64,7 @@ jobs:
           app_changed=false
           while IFS= read -r file; do
             case "$file" in
-              *.go|go.mod|go.sum|LICENSE|mise.toml|config/*|homeassistant/*|notify/*|tui/*|.scripts/version.sh|.scripts/linux/PKGBUILD|.scripts/linux/arch-package.install|.scripts/linux/go-automate-home-assistant-bridge.service)
+              *.go|go.mod|go.sum|LICENSE|mise.toml|config/*|homeassistant/*|notify/*|tui/*|.scripts/version.sh|.scripts/linux/PKGBUILD|.scripts/linux/prepare-aur.sh|.scripts/linux/arch-package.install|.scripts/linux/go-automate-home-assistant-bridge.service)
                 app_changed=true
                 break
                 ;;
@@ -75,14 +78,12 @@ jobs:
             echo "No AUR-relevant changes detected. Skipping AUR update."
           fi
 
-  update-aur:
-    name: Update AUR (go-automate-git)
+  prepare-aur:
+    name: Prepare AUR package (go-automate-git)
     runs-on: ubuntu-latest
     needs:
       - build
       - aur-changes
-    container:
-      image: ghcr.io/timmo001/system-bridge/ci-build-arch:latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.aur-changes.outputs.app_changed == 'true'
 
     steps:
@@ -91,32 +92,31 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for version calculation
 
-      - name: Set up mise
-        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d  # v4.2.0
+      - name: Prepare AUR package files
+        run: .scripts/linux/prepare-aur.sh "${{ runner.temp }}/aur-package"
 
-      - name: Test build
-        run: |
-          echo "Testing build to ensure it compiles..."
+      - name: Upload AUR package files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aur-package
+          if-no-files-found: error
+          retention-days: 1
 
-          # Fix git ownership for VCS stamping in container
-          git config --global --add safe.directory "$(pwd)"
-
-          mise run build
-
-      - name: Update AUR package
-        env:
-          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_WORKSPACE: ${{ github.workspace }}
-        run: |
-          # Run the update script
-          chmod +x .scripts/linux/update-aur.sh
-
-          # If running as root and builduser exists, switch to builduser
-          if [ "$(id -u)" -eq 0 ] && id -u builduser >/dev/null 2>&1; then
-            echo "Running as root, switching to builduser..."
-            chown -R builduser:builduser "$(pwd)"
-            exec sudo --preserve-env=CI,AUR_SSH_PRIVATE_KEY,GITHUB_SHA,GITHUB_WORKSPACE -u builduser -H bash ./.scripts/linux/update-aur.sh
-          fi
-
-          .scripts/linux/update-aur.sh
+  update-aur:
+    name: Update AUR (go-automate-git)
+    needs:
+      - aur-changes
+      - prepare-aur
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.aur-changes.outputs.app_changed == 'true'
+    permissions:
+      contents: read
+    uses: >-  # master
+      timmo001/workflows/.github/workflows/publish-aur.yml@b1d37bf9247fadf3209395cd6bdcbd55c9989370
+    with:
+      package-name: go-automate-git
+      artifact-name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
+      pkgbuild-path: PKGBUILD
+      auxiliary-file-paths: arch-package.install
+    secrets:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
