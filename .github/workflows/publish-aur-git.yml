@@ -1,0 +1,91 @@
+---
+name: Publish AUR git package
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "*.go"
+      - go.mod
+      - go.sum
+      - LICENSE
+      - mise.toml
+      - "config/**"
+      - "homeassistant/**"
+      - "notify/**"
+      - "tui/**"
+      - .scripts/version.sh
+      - .scripts/linux/PKGBUILD
+      - .scripts/linux/prepare-aur.sh
+      - .scripts/linux/arch-package.install
+      - .scripts/linux/go-automate-home-assistant-bridge.service
+      - .github/workflows/publish-aur-git.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-aur-git-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up mise
+        uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204  # v4.2.2
+
+      - name: Typecheck TUI
+        run: mise run typecheck:tui
+
+      - name: Build Go app and TUI
+        run: |
+          # Fix git ownership for VCS stamping
+          git config --global --add safe.directory "$(pwd)"
+
+          mise run build:all
+
+  prepare:
+    name: Prepare AUR package (go-automate-git)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare go-automate-git
+        run: .scripts/linux/prepare-aur.sh "${{ runner.temp }}/aur-package"
+
+      - name: Upload go-automate-git
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aur-package
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish AUR (go-automate-git)
+    needs: prepare
+    uses: >-  # master
+      timmo001/workflows/.github/workflows/publish-aur.yml@a4091353aaeb94959d5d667f11adc12e2f76ce04
+    with:
+      package-name: go-automate-git
+      artifact-name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
+      pkgbuild-path: PKGBUILD
+      auxiliary-file-paths: arch-package.install
+    secrets:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
