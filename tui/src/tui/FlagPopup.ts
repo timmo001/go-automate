@@ -269,10 +269,10 @@ export class FlagPopup {
 
   private clearFields(): void {
     for (const row of this.fieldRows) {
-      this.fieldsContainer.remove(row.id);
+      this.fieldsContainer.remove(row);
     }
     if (this.advancedToggle) {
-      this.fieldsContainer.remove(this.advancedToggle.id);
+      this.fieldsContainer.remove(this.advancedToggle);
       this.advancedToggle = null;
     }
     this.fieldRows = [];
@@ -568,6 +568,6 @@ export class FlagPopup {
   /** Remove the popup from the render tree */
   destroy(): void {
     this.hide();
-    this.renderer.root.remove(this.root.id);
+    this.renderer.root.remove(this.root);
   }
 }
