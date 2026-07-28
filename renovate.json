@@ -6,6 +6,7 @@
     "group:recommended"
   ],
   "dependencyDashboard": true,
+  "minimumReleaseAge": "1 day",
   "labels": ["dependencies"],
   "lockFileMaintenance": {
     "enabled": true
