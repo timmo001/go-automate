@@ -1,0 +1,40 @@
+---
+name: Publish Arch git package
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "*.go"
+      - go.mod
+      - go.sum
+      - LICENSE
+      - mise.toml
+      - "config/**"
+      - "homeassistant/**"
+      - "notify/**"
+      - "tui/**"
+      - .scripts/linux/PKGBUILD
+      - .scripts/linux/arch-package.install
+      - .scripts/linux/go-automate-home-assistant-bridge.service
+      - .github/workflows/publish-arch-git.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-arch-git-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish Arch package (go-automate-git)
+    # yamllint disable-line rule:line-length
+    uses: timmo001/workflows/.github/workflows/build-arch-package.yml@4797d9f93b2636e75dda38232aac206ac161f7e5  # master
+    with:
+      package-name: go-automate-git
+    secrets:
+      ARCH_REPO_DISPATCH_TOKEN: ${{ secrets.ARCH_REPO_DISPATCH_TOKEN }}
