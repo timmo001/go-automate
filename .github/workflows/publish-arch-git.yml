@@ -33,7 +33,7 @@ jobs:
   publish:
     name: Publish Arch package (go-automate-git)
     # yamllint disable-line rule:line-length
-    uses: timmo001/workflows/.github/workflows/build-arch-package.yml@bb5682350cf340c8a9e95247322cb6ccf9bde8e3  # master
+    uses: timmo001/workflows/.github/workflows/build-arch-package.yml@70f9ba83ef349fd13c530f1374cc9a7944453ef3  # master
     with:
       package-name: go-automate-git
     secrets:
