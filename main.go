@@ -514,8 +514,8 @@ func appendBarText(baseText string, label string) string {
 
 func printEntityState(state *homeassistant.HomeAssistantState, name string, options entityWatchOutputOptions) {
 	if options.BarJSON {
-		text := state.State
-		tooltip := state.State
+		text := state.StateWithUnit()
+		tooltip := state.StateWithUnit()
 		className := state.State
 
 		if state.State == "on" {
@@ -535,7 +535,7 @@ func printEntityState(state *homeassistant.HomeAssistantState, name string, opti
 			} else if options.Icon != "" {
 				text = options.Icon
 			} else if options.Icon == "" {
-				text = state.State
+				text = state.StateWithUnit()
 			}
 			text = appendBarText(text, options.TextOff)
 			if options.TooltipOff != "" {

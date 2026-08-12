@@ -70,6 +70,26 @@ func (state *HomeAssistantState) FriendlyName() string {
 	return name
 }
 
+// StateWithUnit returns the state followed by its unit_of_measurement
+// attribute, or the raw state when the attribute is absent or invalid.
+func (state *HomeAssistantState) StateWithUnit() string {
+	if state == nil {
+		return ""
+	}
+
+	raw, ok := state.Attributes["unit_of_measurement"]
+	if !ok {
+		return state.State
+	}
+
+	var unit string
+	if err := json.Unmarshal(raw, &unit); err != nil || unit == "" {
+		return state.State
+	}
+
+	return state.State + " " + unit
+}
+
 // EntityRegistryDisplayEntry is a single entity from
 // config/entity_registry/list_for_display. The backend pre-resolves the
 // entity-specific display name (including translation keys) into the en field.
