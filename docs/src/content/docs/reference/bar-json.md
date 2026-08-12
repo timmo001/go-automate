@@ -27,7 +27,7 @@ Every line is a JSON object. Three string fields are always present, and an opti
 `name` field is added when Go Automate can resolve the entity's name:
 
 ```json
-{ "text": "437", "tooltip": "437", "class": "437", "name": "Living Room Thermostat Temperature" }
+{ "text": "23.3 °C", "tooltip": "23.3 °C", "class": "23.3", "name": "Living Room Thermostat Temperature" }
 ```
 
 | Field | Purpose |
@@ -49,7 +49,9 @@ A watcher treats the entity state as either `on` or not. The check is a literal 
 against the string `on`, so any other value (`off`, `unavailable`, a sensor reading, and so
 on) is handled by the "not on" branch.
 
-All three fields default to the raw entity state. The output flags then refine them:
+`text` and `tooltip` default to the entity state followed by its `unit_of_measurement`, when
+Home Assistant provides one. `class` remains the raw entity state. The output flags then
+refine them:
 
 **When the state is `on`:**
 
@@ -59,15 +61,15 @@ All three fields default to the raw entity state. The output flags then refine t
 
 **When the state is not `on`:**
 
-- `text` becomes empty if `--hide-off` is set, otherwise `--icon` if set, otherwise the raw
-  state. `--text-off` is then appended.
+- `text` becomes empty if `--hide-off` is set, otherwise `--icon` if set, otherwise the state
+  with its unit of measurement. `--text-off` is then appended.
 - `tooltip` becomes `--tooltip-off` if set.
 - `class` becomes `--class-off` if set.
 - With `--hide-off`, `hidden` is appended to `class` (so the bar can hide the module while
   keeping the line valid JSON).
 
 Any flag you leave unset keeps the field at its default, so a minimal `--bar-json` run still
-produces valid output built from the raw state.
+produces valid output with sensor units while preserving the raw state in `class`.
 
 **The `name` field:**
 
