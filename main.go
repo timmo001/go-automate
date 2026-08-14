@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/charmbracelet/log"
@@ -780,18 +781,28 @@ func climateStateText(state *homeassistant.HomeAssistantState) string {
 	if state == nil || state.State == "unavailable" {
 		return "unavailable"
 	}
+	stateText := state.State
+	if stateText == "cool" {
+		stateText = "Cool"
+	}
+	parts := []string{stateText}
 	var fanMode string
 	if raw, ok := state.Attributes["fan_mode"]; ok {
 		_ = json.Unmarshal(raw, &fanMode)
 	}
 	labels := map[string]string{"1": "Low", "2": "High"}
 	if label := labels[fanMode]; label != "" {
-		return state.State + " • " + label
+		parts = append(parts, label)
+	} else if fanMode != "" {
+		parts = append(parts, fanMode)
 	}
-	if fanMode != "" {
-		return state.State + " • " + fanMode
+	var targetTemperature float64
+	if raw, ok := state.Attributes["temperature"]; ok {
+		if err := json.Unmarshal(raw, &targetTemperature); err == nil {
+			parts = append(parts, strconv.FormatFloat(targetTemperature, 'f', -1, 64)+" °C")
+		}
 	}
-	return state.State
+	return strings.Join(parts, " • ")
 }
 
 func printClimateState(state *homeassistant.HomeAssistantState, name string) {

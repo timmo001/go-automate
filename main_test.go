@@ -68,10 +68,11 @@ func TestClimateStateText(t *testing.T) {
 	state := &homeassistant.HomeAssistantState{
 		State: "cool",
 		Attributes: map[string]json.RawMessage{
-			"fan_mode": json.RawMessage(`"1"`),
+			"fan_mode":    json.RawMessage(`"1"`),
+			"temperature": json.RawMessage(`23.8`),
 		},
 	}
-	if got := climateStateText(state); got != "cool • Low" {
+	if got := climateStateText(state); got != "Cool • Low • 23.8 °C" {
 		t.Fatalf("climateStateText() = %q", got)
 	}
 	state.State = "unavailable"

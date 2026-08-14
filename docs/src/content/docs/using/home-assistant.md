@@ -84,7 +84,7 @@ Set a climate entity's fan mode with the `climate` command (alias `cl`):
 go-automate ha climate fan-mode air_conditioner 1
 ```
 
-Watch its HVAC state and labelled fan mode through the shared bridge:
+Watch its HVAC state, labelled fan mode, and target temperature through the shared bridge. Cooling is displayed as `Cool`:
 
 ```bash
 go-automate ha climate watch air_conditioner

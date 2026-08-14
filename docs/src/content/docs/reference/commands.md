@@ -102,7 +102,7 @@ Control climate entities. The entity name omits the `climate.` domain.
 
 | Subcommand | Effect |
 | --- | --- |
-| `watch <name>` | Watch HVAC state and fan mode through the shared bridge. |
+| `watch <name>` | Watch HVAC state, fan mode, and target temperature through the shared bridge. |
 | `fan-mode <name> <mode>` | Call `climate.set_fan_mode`. |
 
 ### `ha input_boolean` (alias `ha ib`)
