@@ -193,6 +193,17 @@ func main() {
 						Aliases: []string{"c"},
 						Commands: []*cli.Command{
 							{
+								Name:      "watch",
+								Aliases:   []string{"w"},
+								ArgsUsage: "<name>",
+								Flags: []cli.Flag{
+									&cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"},
+								},
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHAWatchCover(ctx, cmd)
+								},
+							},
+							{
 								Name:      "position",
 								ArgsUsage: "<name> <0-100>",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -640,6 +651,22 @@ func cmdHAWatchClimate(ctx context.Context, cmd *cli.Command) error {
 	})
 }
 
+func cmdHAWatchCover(ctx context.Context, cmd *cli.Command) error {
+	name := cmd.Args().Get(0)
+	if name == "" {
+		return fmt.Errorf("cover entity name is required")
+	}
+	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
+	if err != nil {
+		return err
+	}
+
+	return homeassistant.BridgeWatchEntity(ctx, socketPath, "cover."+name, func(state *homeassistant.HomeAssistantState, entityName string) error {
+		printCoverState(state, entityName)
+		return nil
+	})
+}
+
 func warnIfPlainWatchOutput(options entityWatchOutputOptions) {
 	if options.BarJSON {
 		return
@@ -816,6 +843,36 @@ func climateStateText(state *homeassistant.HomeAssistantState) string {
 		}
 	}
 	return strings.Join(parts, " • ")
+}
+
+func coverStateText(state *homeassistant.HomeAssistantState) string {
+	if state == nil || state.State == "unavailable" {
+		return "unavailable"
+	}
+	var tiltPosition float64
+	if raw, ok := state.Attributes["current_tilt_position"]; ok {
+		if err := json.Unmarshal(raw, &tiltPosition); err == nil {
+			return state.State + " • " + strconv.FormatFloat(tiltPosition, 'f', -1, 64) + "%"
+		}
+	}
+	return state.State
+}
+
+func printCoverState(state *homeassistant.HomeAssistantState, name string) {
+	text := coverStateText(state)
+	payload := map[string]string{
+		"text":    text,
+		"tooltip": text,
+		"class":   state.State,
+	}
+	if name != "" {
+		payload["name"] = name
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatalf("error marshalling cover bar JSON payload: %v", err)
+	}
+	fmt.Println(string(encoded))
 }
 
 func printClimateState(state *homeassistant.HomeAssistantState, name string) {

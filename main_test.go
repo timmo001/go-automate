@@ -81,6 +81,26 @@ func TestClimateStateText(t *testing.T) {
 	}
 }
 
+func TestCoverStateText(t *testing.T) {
+	state := &homeassistant.HomeAssistantState{
+		State: "open",
+		Attributes: map[string]json.RawMessage{
+			"current_tilt_position": json.RawMessage(`80`),
+		},
+	}
+	if got := coverStateText(state); got != "open • 80%" {
+		t.Fatalf("coverStateText() = %q", got)
+	}
+	delete(state.Attributes, "current_tilt_position")
+	if got := coverStateText(state); got != "open" {
+		t.Fatalf("coverStateText(without tilt position) = %q", got)
+	}
+	state.State = "unavailable"
+	if got := coverStateText(state); got != "unavailable" {
+		t.Fatalf("coverStateText(unavailable) = %q", got)
+	}
+}
+
 func TestParseInputNumberValue(t *testing.T) {
 	for _, value := range []string{"0", "23.8", "36", "-1.5"} {
 		if _, err := parseInputNumberValue(value); err != nil {

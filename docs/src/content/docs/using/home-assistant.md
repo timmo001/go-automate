@@ -77,6 +77,12 @@ go-automate ha cover tilt-position living_room_left_blind 40
 go-automate ha cover close curtain
 ```
 
+Watch a cover's state and current tilt position through the shared bridge:
+
+```bash
+go-automate ha cover watch living_room_left_blind
+```
+
 ## Climate
 
 Set a climate entity's fan mode with the `climate` command (alias `cl`):
