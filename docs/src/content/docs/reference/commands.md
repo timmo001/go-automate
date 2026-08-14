@@ -106,6 +106,16 @@ Control input boolean helpers. Same subcommands as `light`.
 | `turn-off <name>` | `off` | `input_boolean.turn_off` |
 | `toggle <name>` | `t` | `input_boolean.toggle` |
 
+### `ha cover` (alias `ha c`)
+
+Control cover entities. Each subcommand takes the entity name without its domain.
+
+| Subcommand | Service |
+| --- | --- |
+| `open <name>` | `cover.open_cover` |
+| `stop <name>` | `cover.stop_cover` |
+| `close <name>` | `cover.close_cover` |
+
 ## `notify <summary> [body]` (alias `n`)
 
 Send a desktop notification through `notify-send`. The first argument is the summary; the

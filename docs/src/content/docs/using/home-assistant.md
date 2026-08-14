@@ -1,6 +1,6 @@
 ---
 title: Home Assistant
-description: Control lights, switches, input booleans and assist satellites from the command line.
+description: Control lights, switches, covers, input booleans and assist satellites from the command line.
 ---
 
 The `home-assistant` command (aliased `ha`) calls Home Assistant services over the
@@ -53,6 +53,17 @@ go-automate ha input_boolean turn-on guest_mode
 go-automate ha input_boolean toggle guest_mode
 ```
 
+## Covers
+
+Open, stop, or close a cover such as a curtain or blind with the `cover` command
+(alias `c`):
+
+```bash
+go-automate ha cover open curtain
+go-automate ha cover stop curtain
+go-automate ha cover close curtain
+```
+
 ## Assist satellites
 
 Announce a message to an area through an assist satellite with
@@ -73,6 +84,7 @@ quotes so it is passed as a single argument.
 | --- | --- | --- | --- |
 | `ha light turn-on` / `turn-off` / `toggle` | `ha l on` / `off` / `t` | `light.turn_on` / `turn_off` / `toggle` | `light.<name>` |
 | `ha switch turn-on` / `turn-off` / `toggle` | `ha s on` / `off` / `t` | `switch.turn_on` / `turn_off` / `toggle` | `switch.<name>` |
+| `ha cover open` / `stop` / `close` | `ha c open` / `stop` / `close` | `cover.open_cover` / `stop_cover` / `close_cover` | `cover.<name>` |
 | `ha input_boolean turn-on` / `turn-off` / `toggle` | `ha ib on` / `off` / `t` | `input_boolean.turn_on` / `turn_off` / `toggle` | `input_boolean.<name>` |
 | `ha assist_satellite announce` | `ha as a` | `assist_satellite.announce` | `area_id` |
 

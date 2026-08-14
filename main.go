@@ -154,6 +154,30 @@ func main() {
 						Aliases:  []string{"s"},
 						Commands: createToggleServiceCommands("switch"),
 					},
+					{
+						Name:    "cover",
+						Aliases: []string{"c"},
+						Commands: []*cli.Command{
+							{
+								Name: "open",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "cover", "open_cover", "entity_id", nil, false)
+								},
+							},
+							{
+								Name: "stop",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "cover", "stop_cover", "entity_id", nil, false)
+								},
+							},
+							{
+								Name: "close",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "cover", "close_cover", "entity_id", nil, false)
+								},
+							},
+						},
+					},
 				},
 			},
 			{
