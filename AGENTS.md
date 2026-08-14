@@ -12,14 +12,15 @@
 - Build: `mise run build` (plain `go build` also works)
 - Build app + TUI: `mise run build:all`
 - Package (Arch): `mise run package:arch`
-- Install (Arch): `yay -U dist/go-automate-<version>-1-x86_64.pkg.tar.zst`
+- Install or upgrade only from the published pacman package after its repository workflow succeeds. Do not install the local artifact from `dist/`.
 - Run: `mise run run` (or `go run main.go [command]`)
 - Background bridge dev server: `mise run serve:ha-bridge` (pitchfork)
 - Pitchfork helpers: `mise run serve:status`, `mise run serve:logs`, `mise run serve:restart`, `mise run serve:stop`
 - Test: `mise run test`
 - Lint/format: `mise run lint:go` (`go fmt ./...` + `go vet ./...`); `mise run lint:all` also lints docs (`mise run docs:lint`)
 - Check (lint + test): `mise run check`
-- Install (go install): `mise run install`
+- Never use `go install` or `mise run install`; a Go-bin copy can take precedence over the published Arch package.
+- When this repo and a consuming repo both need changes, validate both first, then use the question tool to ask whether to commit and push the required repos or stop for review. Push this package source first, wait for package publication, and test the consumer against the published pacman package only after commit and push is authorised.
 - Docs: `mise run docs:dev`, `mise run docs:build`
 - Update deps: `mise run deps` (or `go mod tidy`)
 - No tests currently exist in codebase
