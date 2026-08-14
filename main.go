@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/signal"
 	"strconv"
@@ -146,6 +147,37 @@ func main() {
 						Commands: createToggleServiceCommands("input_boolean"),
 					},
 					{
+						Name:    "input_number",
+						Aliases: []string{"in"},
+						Commands: []*cli.Command{
+							{
+								Name: "increment",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "input_number", "increment", "entity_id", nil, false)
+								},
+							},
+							{
+								Name: "decrement",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHACallService(cmd, "input_number", "decrement", "entity_id", nil, false)
+								},
+							},
+							{
+								Name:      "set-value",
+								ArgsUsage: "<name> <value>",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									value, err := parseInputNumberValue(cmd.Args().Get(1))
+									if err != nil {
+										return err
+									}
+									return cmdHACallService(cmd, "input_number", "set_value", "entity_id", map[string]float64{
+										"value": value,
+									}, false)
+								},
+							},
+						},
+					},
+					{
 						Name:     "light",
 						Aliases:  []string{"l"},
 						Commands: createToggleServiceCommands("light"),
@@ -221,6 +253,15 @@ func parseCoverPosition(value string) (int, error) {
 	}
 
 	return position, nil
+}
+
+func parseInputNumberValue(value string) (float64, error) {
+	number, err := strconv.ParseFloat(value, 64)
+	if err != nil || math.IsInf(number, 0) || math.IsNaN(number) {
+		return 0, fmt.Errorf("input number value must be a finite number")
+	}
+
+	return number, nil
 }
 
 func isInteractiveSession() bool {

@@ -1,6 +1,6 @@
 ---
 title: Home Assistant
-description: Control lights, switches, covers, input booleans and assist satellites from the command line.
+description: Control lights, switches, covers, input helpers and assist satellites from the command line.
 ---
 
 The `home-assistant` command (aliased `ha`) calls Home Assistant services over the
@@ -53,6 +53,17 @@ go-automate ha input_boolean turn-on guest_mode
 go-automate ha input_boolean toggle guest_mode
 ```
 
+## Input numbers
+
+Increment or decrement an input number by its configured step, or set an exact value, with
+the `input_number` command (alias `in`):
+
+```bash
+go-automate ha input_number increment target_temperature
+go-automate ha input_number decrement target_temperature
+go-automate ha input_number set-value target_temperature 23.8
+```
+
 ## Covers
 
 Set a cover such as a curtain or blind to a percentage, or close it, with the
@@ -85,6 +96,7 @@ quotes so it is passed as a single argument.
 | `ha switch turn-on` / `turn-off` / `toggle` | `ha s on` / `off` / `t` | `switch.turn_on` / `turn_off` / `toggle` | `switch.<name>` |
 | `ha cover position` / `close` | `ha c position` / `close` | `cover.set_cover_position` / `close_cover` | `cover.<name>` |
 | `ha input_boolean turn-on` / `turn-off` / `toggle` | `ha ib on` / `off` / `t` | `input_boolean.turn_on` / `turn_off` / `toggle` | `input_boolean.<name>` |
+| `ha input_number increment` / `decrement` / `set-value` | `ha in increment` / `decrement` / `set-value` | `input_number.increment` / `decrement` / `set_value` | `input_number.<name>` |
 | `ha assist_satellite announce` | `ha as a` | `assist_satellite.announce` | `area_id` |
 
 ## Next steps

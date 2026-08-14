@@ -54,3 +54,17 @@ func TestParseCoverPosition(t *testing.T) {
 		}
 	}
 }
+
+func TestParseInputNumberValue(t *testing.T) {
+	for _, value := range []string{"0", "23.8", "36", "-1.5"} {
+		if _, err := parseInputNumberValue(value); err != nil {
+			t.Fatalf("parseInputNumberValue(%q) returned %v", value, err)
+		}
+	}
+
+	for _, value := range []string{"", "off", "NaN", "+Inf"} {
+		if _, err := parseInputNumberValue(value); err == nil {
+			t.Fatalf("parseInputNumberValue(%q) succeeded", value)
+		}
+	}
+}

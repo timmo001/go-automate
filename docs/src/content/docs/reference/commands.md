@@ -106,6 +106,16 @@ Control input boolean helpers. Same subcommands as `light`.
 | `turn-off <name>` | `off` | `input_boolean.turn_off` |
 | `toggle <name>` | `t` | `input_boolean.toggle` |
 
+### `ha input_number` (alias `ha in`)
+
+Control input number helpers. Each subcommand takes the entity name without its domain.
+
+| Subcommand | Service |
+| --- | --- |
+| `increment <name>` | `input_number.increment` |
+| `decrement <name>` | `input_number.decrement` |
+| `set-value <name> <value>` | `input_number.set_value` |
+
 ### `ha cover` (alias `ha c`)
 
 Control cover entities. Each subcommand takes the entity name without its domain.
