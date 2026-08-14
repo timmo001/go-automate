@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/charmbracelet/log"
@@ -159,15 +160,16 @@ func main() {
 						Aliases: []string{"c"},
 						Commands: []*cli.Command{
 							{
-								Name: "open",
+								Name:      "position",
+								ArgsUsage: "<name> <0-100>",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "cover", "open_cover", "entity_id", nil, false)
-								},
-							},
-							{
-								Name: "stop",
-								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "cover", "stop_cover", "entity_id", nil, false)
+									position, err := parseCoverPosition(cmd.Args().Get(1))
+									if err != nil {
+										return err
+									}
+									return cmdHACallService(cmd, "cover", "set_cover_position", "entity_id", map[string]int{
+										"position": position,
+									}, false)
 								},
 							},
 							{
@@ -210,6 +212,15 @@ func main() {
 	if !completing {
 		log.Info("------ Exiting ------")
 	}
+}
+
+func parseCoverPosition(value string) (int, error) {
+	position, err := strconv.Atoi(value)
+	if err != nil || position < 0 || position > 100 {
+		return 0, fmt.Errorf("cover position must be an integer from 0 to 100")
+	}
+
+	return position, nil
 }
 
 func isInteractiveSession() bool {

@@ -112,8 +112,7 @@ Control cover entities. Each subcommand takes the entity name without its domain
 
 | Subcommand | Service |
 | --- | --- |
-| `open <name>` | `cover.open_cover` |
-| `stop <name>` | `cover.stop_cover` |
+| `position <name> <0-100>` | `cover.set_cover_position` |
 | `close <name>` | `cover.close_cover` |
 
 ## `notify <summary> [body]` (alias `n`)

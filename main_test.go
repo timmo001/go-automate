@@ -40,3 +40,17 @@ func TestPrintEntityStateIncludesUnitInDefaultBarText(t *testing.T) {
 		t.Fatalf("printEntityState() = %s", got)
 	}
 }
+
+func TestParseCoverPosition(t *testing.T) {
+	for _, value := range []string{"0", "10", "20", "30", "60", "100"} {
+		if _, err := parseCoverPosition(value); err != nil {
+			t.Fatalf("parseCoverPosition(%q) returned %v", value, err)
+		}
+	}
+
+	for _, value := range []string{"", "10.5", "-1", "101"} {
+		if _, err := parseCoverPosition(value); err == nil {
+			t.Fatalf("parseCoverPosition(%q) succeeded", value)
+		}
+	}
+}
