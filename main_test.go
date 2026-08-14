@@ -55,6 +55,31 @@ func TestParseCoverPosition(t *testing.T) {
 	}
 }
 
+func TestParseClimateFanMode(t *testing.T) {
+	if mode, err := parseClimateFanMode("1"); err != nil || mode != "1" {
+		t.Fatalf("parseClimateFanMode(1) = %q, %v", mode, err)
+	}
+	if _, err := parseClimateFanMode(""); err == nil {
+		t.Fatal("parseClimateFanMode() succeeded without a mode")
+	}
+}
+
+func TestClimateStateText(t *testing.T) {
+	state := &homeassistant.HomeAssistantState{
+		State: "cool",
+		Attributes: map[string]json.RawMessage{
+			"fan_mode": json.RawMessage(`"1"`),
+		},
+	}
+	if got := climateStateText(state); got != "cool • Low" {
+		t.Fatalf("climateStateText() = %q", got)
+	}
+	state.State = "unavailable"
+	if got := climateStateText(state); got != "unavailable" {
+		t.Fatalf("climateStateText(unavailable) = %q", got)
+	}
+}
+
 func TestParseInputNumberValue(t *testing.T) {
 	for _, value := range []string{"0", "23.8", "36", "-1.5"} {
 		if _, err := parseInputNumberValue(value); err != nil {

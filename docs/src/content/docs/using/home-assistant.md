@@ -1,6 +1,6 @@
 ---
 title: Home Assistant
-description: Control lights, switches, covers, input helpers and assist satellites from the command line.
+description: Control lights, switches, covers, climate entities, input helpers and assist satellites from the command line.
 ---
 
 The `home-assistant` command (aliased `ha`) calls Home Assistant services over the
@@ -76,6 +76,20 @@ go-automate ha cover position curtain 30
 go-automate ha cover close curtain
 ```
 
+## Climate
+
+Set a climate entity's fan mode with the `climate` command (alias `cl`):
+
+```bash
+go-automate ha climate fan-mode air_conditioner 1
+```
+
+Watch its HVAC state and labelled fan mode through the shared bridge:
+
+```bash
+go-automate ha climate watch air_conditioner
+```
+
 ## Assist satellites
 
 Announce a message to an area through an assist satellite with
@@ -97,6 +111,7 @@ quotes so it is passed as a single argument.
 | `ha light turn-on` / `turn-off` / `toggle` | `ha l on` / `off` / `t` | `light.turn_on` / `turn_off` / `toggle` | `light.<name>` |
 | `ha switch turn-on` / `turn-off` / `toggle` | `ha s on` / `off` / `t` | `switch.turn_on` / `turn_off` / `toggle` | `switch.<name>` |
 | `ha cover position` / `close` | `ha c position` / `close` | `cover.set_cover_position` / `close_cover` | `cover.<name>` |
+| `ha climate fan-mode` | `ha cl fan-mode` | `climate.set_fan_mode` | `climate.<name>` |
 | `ha input_boolean turn-on` / `turn-off` / `toggle` | `ha ib on` / `off` / `t` | `input_boolean.turn_on` / `turn_off` / `toggle` | `input_boolean.<name>` |
 | `ha input_number increment` / `decrement` / `set-value` | `ha in increment` / `decrement` / `set-value` | `input_number.increment` / `decrement` / `set_value` | `input_number.<name>` |
 | `ha assist_satellite announce` | `ha as a` | `assist_satellite.announce` | `area_id` |

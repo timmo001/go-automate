@@ -212,6 +212,36 @@ func main() {
 							},
 						},
 					},
+					{
+						Name:    "climate",
+						Aliases: []string{"cl"},
+						Commands: []*cli.Command{
+							{
+								Name:      "watch",
+								Aliases:   []string{"w"},
+								ArgsUsage: "<name>",
+								Flags: []cli.Flag{
+									&cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"},
+								},
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									return cmdHAWatchClimate(ctx, cmd)
+								},
+							},
+							{
+								Name:      "fan-mode",
+								ArgsUsage: "<name> <mode>",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									mode, err := parseClimateFanMode(cmd.Args().Get(1))
+									if err != nil {
+										return err
+									}
+									return cmdHACallService(cmd, "climate", "set_fan_mode", "entity_id", map[string]string{
+										"fan_mode": mode,
+									}, false)
+								},
+							},
+						},
+					},
 				},
 			},
 			{
@@ -253,6 +283,14 @@ func parseCoverPosition(value string) (int, error) {
 	}
 
 	return position, nil
+}
+
+func parseClimateFanMode(value string) (string, error) {
+	if value == "" {
+		return "", fmt.Errorf("climate fan mode is required")
+	}
+
+	return value, nil
 }
 
 func parseInputNumberValue(value string) (float64, error) {
@@ -572,6 +610,22 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	return watchEntityViaBridge(ctx, socketPath, entityID, options)
 }
 
+func cmdHAWatchClimate(ctx context.Context, cmd *cli.Command) error {
+	name := cmd.Args().Get(0)
+	if name == "" {
+		return fmt.Errorf("climate entity name is required")
+	}
+	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
+	if err != nil {
+		return err
+	}
+
+	return homeassistant.BridgeWatchEntity(ctx, socketPath, "climate."+name, func(state *homeassistant.HomeAssistantState, entityName string) error {
+		printClimateState(state, entityName)
+		return nil
+	})
+}
+
 func warnIfPlainWatchOutput(options entityWatchOutputOptions) {
 	if options.BarJSON {
 		return
@@ -720,4 +774,39 @@ func printEntityState(state *homeassistant.HomeAssistantState, name string, opti
 	}
 
 	fmt.Println(state.State)
+}
+
+func climateStateText(state *homeassistant.HomeAssistantState) string {
+	if state == nil || state.State == "unavailable" {
+		return "unavailable"
+	}
+	var fanMode string
+	if raw, ok := state.Attributes["fan_mode"]; ok {
+		_ = json.Unmarshal(raw, &fanMode)
+	}
+	labels := map[string]string{"1": "Low", "2": "High"}
+	if label := labels[fanMode]; label != "" {
+		return state.State + " • " + label
+	}
+	if fanMode != "" {
+		return state.State + " • " + fanMode
+	}
+	return state.State
+}
+
+func printClimateState(state *homeassistant.HomeAssistantState, name string) {
+	text := climateStateText(state)
+	payload := map[string]string{
+		"text":    text,
+		"tooltip": text,
+		"class":   state.State,
+	}
+	if name != "" {
+		payload["name"] = name
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatalf("error marshalling climate bar JSON payload: %v", err)
+	}
+	fmt.Println(string(encoded))
 }

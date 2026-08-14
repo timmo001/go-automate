@@ -96,6 +96,15 @@ Control switch entities. Same subcommands as `light`.
 | `turn-off <name>` | `off` | `switch.turn_off` |
 | `toggle <name>` | `t` | `switch.toggle` |
 
+### `ha climate` (alias `ha cl`)
+
+Control climate entities. The entity name omits the `climate.` domain.
+
+| Subcommand | Effect |
+| --- | --- |
+| `watch <name>` | Watch HVAC state and fan mode through the shared bridge. |
+| `fan-mode <name> <mode>` | Call `climate.set_fan_mode`. |
+
 ### `ha input_boolean` (alias `ha ib`)
 
 Control input boolean helpers. Same subcommands as `light`.
