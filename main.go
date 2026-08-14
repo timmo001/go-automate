@@ -206,6 +206,19 @@ func main() {
 								},
 							},
 							{
+								Name:      "tilt-position",
+								ArgsUsage: "<name> <0-100>",
+								Action: func(ctx context.Context, cmd *cli.Command) error {
+									position, err := parseCoverPosition(cmd.Args().Get(1))
+									if err != nil {
+										return err
+									}
+									return cmdHACallService(cmd, "cover", "set_cover_tilt_position", "entity_id", map[string]int{
+										"tilt_position": position,
+									}, false)
+								},
+							},
+							{
 								Name: "close",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
 									return cmdHACallService(cmd, "cover", "close_cover", "entity_id", nil, false)

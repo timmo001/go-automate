@@ -68,11 +68,12 @@ go-automate ha input_number set-value target_temperature 23.8
 
 ## Covers
 
-Set a cover such as a curtain or blind to a percentage, or close it, with the
-`cover` command (alias `c`):
+Set a cover such as a curtain or blind to a position or tilt percentage, or close
+it, with the `cover` command (alias `c`):
 
 ```bash
 go-automate ha cover position curtain 30
+go-automate ha cover tilt-position living_room_left_blind 40
 go-automate ha cover close curtain
 ```
 
@@ -110,7 +111,7 @@ quotes so it is passed as a single argument.
 | --- | --- | --- | --- |
 | `ha light turn-on` / `turn-off` / `toggle` | `ha l on` / `off` / `t` | `light.turn_on` / `turn_off` / `toggle` | `light.<name>` |
 | `ha switch turn-on` / `turn-off` / `toggle` | `ha s on` / `off` / `t` | `switch.turn_on` / `turn_off` / `toggle` | `switch.<name>` |
-| `ha cover position` / `close` | `ha c position` / `close` | `cover.set_cover_position` / `close_cover` | `cover.<name>` |
+| `ha cover position` / `tilt-position` / `close` | `ha c position` / `tilt-position` / `close` | `cover.set_cover_position` / `set_cover_tilt_position` / `close_cover` | `cover.<name>` |
 | `ha climate fan-mode` | `ha cl fan-mode` | `climate.set_fan_mode` | `climate.<name>` |
 | `ha input_boolean turn-on` / `turn-off` / `toggle` | `ha ib on` / `off` / `t` | `input_boolean.turn_on` / `turn_off` / `toggle` | `input_boolean.<name>` |
 | `ha input_number increment` / `decrement` / `set-value` | `ha in increment` / `decrement` / `set-value` | `input_number.increment` / `decrement` / `set_value` | `input_number.<name>` |

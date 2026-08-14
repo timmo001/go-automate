@@ -132,6 +132,7 @@ Control cover entities. Each subcommand takes the entity name without its domain
 | Subcommand | Service |
 | --- | --- |
 | `position <name> <0-100>` | `cover.set_cover_position` |
+| `tilt-position <name> <0-100>` | `cover.set_cover_tilt_position` |
 | `close <name>` | `cover.close_cover` |
 
 ## `notify <summary> [body]` (alias `n`)
