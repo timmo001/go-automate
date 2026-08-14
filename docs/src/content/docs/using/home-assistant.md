@@ -56,7 +56,9 @@ go-automate ha input_boolean toggle guest_mode
 ## Input numbers
 
 Increment or decrement an input number by its configured step, or set an exact value, with
-the `input_number` command (alias `in`):
+the `input_number` command (alias `in`). Increment and decrement read the helper's current
+state and call `input_number.set_value`, avoiding helper implementations whose built-in
+increment and decrement actions fail:
 
 ```bash
 go-automate ha input_number increment target_temperature

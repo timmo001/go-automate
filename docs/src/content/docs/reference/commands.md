@@ -112,8 +112,8 @@ Control input number helpers. Each subcommand takes the entity name without its 
 
 | Subcommand | Service |
 | --- | --- |
-| `increment <name>` | `input_number.increment` |
-| `decrement <name>` | `input_number.decrement` |
+| `increment <name>` | Read current state and step, then call `input_number.set_value` |
+| `decrement <name>` | Read current state and step, then call `input_number.set_value` |
 | `set-value <name> <value>` | `input_number.set_value` |
 
 ### `ha cover` (alias `ha c`)

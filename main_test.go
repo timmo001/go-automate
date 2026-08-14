@@ -68,3 +68,26 @@ func TestParseInputNumberValue(t *testing.T) {
 		}
 	}
 }
+
+func TestAdjustedInputNumberValue(t *testing.T) {
+	state := &homeassistant.HomeAssistantState{
+		State: "23.8",
+		Attributes: map[string]json.RawMessage{
+			"min":  json.RawMessage(`16`),
+			"max":  json.RawMessage(`36`),
+			"step": json.RawMessage(`0.1`),
+		},
+	}
+
+	if got, err := adjustedInputNumberValue(state, 1); err != nil || got != 23.9 {
+		t.Fatalf("adjustedInputNumberValue(increment) = %v, %v", got, err)
+	}
+	if got, err := adjustedInputNumberValue(state, -1); err != nil || got != 23.7 {
+		t.Fatalf("adjustedInputNumberValue(decrement) = %v, %v", got, err)
+	}
+
+	state.State = "36"
+	if got, err := adjustedInputNumberValue(state, 1); err != nil || got != 36 {
+		t.Fatalf("adjustedInputNumberValue(maximum) = %v, %v", got, err)
+	}
+}

@@ -153,13 +153,13 @@ func main() {
 							{
 								Name: "increment",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "input_number", "increment", "entity_id", nil, false)
+									return cmdHAAdjustInputNumber(cmd, 1)
 								},
 							},
 							{
 								Name: "decrement",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "input_number", "decrement", "entity_id", nil, false)
+									return cmdHAAdjustInputNumber(cmd, -1)
 								},
 							},
 							{
@@ -262,6 +262,41 @@ func parseInputNumberValue(value string) (float64, error) {
 	}
 
 	return number, nil
+}
+
+func inputNumberAttribute(state *homeassistant.HomeAssistantState, name string) (float64, error) {
+	raw, ok := state.Attributes[name]
+	if !ok {
+		return 0, fmt.Errorf("input number has no %s attribute", name)
+	}
+
+	var value float64
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return 0, fmt.Errorf("parse input number %s: %w", name, err)
+	}
+
+	return value, nil
+}
+
+func adjustedInputNumberValue(state *homeassistant.HomeAssistantState, direction float64) (float64, error) {
+	current, err := parseInputNumberValue(state.State)
+	if err != nil {
+		return 0, fmt.Errorf("parse input number state: %w", err)
+	}
+	step, err := inputNumberAttribute(state, "step")
+	if err != nil {
+		return 0, err
+	}
+
+	value := current + direction*step
+	if minimum, err := inputNumberAttribute(state, "min"); err == nil {
+		value = max(value, minimum)
+	}
+	if maximum, err := inputNumberAttribute(state, "max"); err == nil {
+		value = min(value, maximum)
+	}
+
+	return math.Round(value*1e6) / 1e6, nil
 }
 
 func isInteractiveSession() bool {
@@ -395,7 +430,44 @@ func cmdHACallService(
 	if err != nil {
 		return err
 	}
+	if !resp.Success {
+		return fmt.Errorf("home assistant service %s.%s failed: %s", domain, service, resp.Error.Message)
+	}
 	log.Infof("Call service response: %v", resp)
+
+	return nil
+}
+
+func cmdHAAdjustInputNumber(cmd *cli.Command, direction float64) error {
+	name := cmd.Args().Get(0)
+	entityID := "input_number." + name
+	conn := homeassistant.Connect()
+	state, err := conn.GetState(entityID)
+	if err != nil {
+		return err
+	}
+	if state == nil {
+		return fmt.Errorf("home assistant entity %s was not found", entityID)
+	}
+	value, err := adjustedInputNumberValue(state, direction)
+	if err != nil {
+		return err
+	}
+
+	resp, err := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
+		ID:          homeassistant.RandomID(),
+		Type:        "call_service",
+		Domain:      "input_number",
+		Service:     "set_value",
+		ServiceData: map[string]float64{"value": value},
+		Target:      map[string]string{"entity_id": entityID},
+	}, true)
+	if err != nil {
+		return err
+	}
+	if !resp.Success {
+		return fmt.Errorf("home assistant service input_number.set_value failed: %s", resp.Error.Message)
+	}
 
 	return nil
 }
