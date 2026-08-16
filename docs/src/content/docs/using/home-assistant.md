@@ -127,3 +127,14 @@ quotes so it is passed as a single argument.
 
 - [Watch entities](/using/watching/) to react to state changes.
 - See every flag in the [Commands reference](/reference/commands/).
+
+## Omarchy plugin
+
+The generated
+[`omarchy-go-automate`](https://github.com/timmo001/omarchy-go-automate)
+plugin provides a configurable Omarchy Quattro bar widget and panel. Its
+user-owned JSON modules file defines entity watchers, actions, labels, and
+icons, so personal Home Assistant entity IDs stay outside this repository.
+
+The plugin source and configuration format live in
+[`omarchy-plugin/`](https://github.com/timmo001/go-automate/tree/main/omarchy-plugin).
