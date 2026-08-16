@@ -32,5 +32,12 @@ if "$publisher" "$source_dir" "$publish_dir" >/dev/null 2>&1; then
   printf 'Publisher accepted a symbolic link.\n' >&2
   exit 1
 fi
+rm "$source_dir/preview.png"
+
+mkdir "$source_dir/unexpected"
+if "$publisher" "$source_dir" "$publish_dir" >/dev/null 2>&1; then
+  printf 'Publisher accepted an unexpected directory.\n' >&2
+  exit 1
+fi
 
 printf 'Omarchy plugin publisher tests passed\n'

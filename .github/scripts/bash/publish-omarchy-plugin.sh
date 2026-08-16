@@ -29,7 +29,7 @@ for file in "${required[@]}"; do
 done
 
 mapfile -t source_files < <(find "$source_dir" -mindepth 1 -maxdepth 1 \
-  -type f -printf '%f\n' | LC_ALL=C sort)
+  -printf '%f\n' | LC_ALL=C sort)
 expected_source=(BarWidget.qml Config.qml FilterablePanel.qml Panel.qml README.md Service.qml manifest.json modules.example.json)
 [[ ${source_files[*]} == "${expected_source[*]}" ]] \
   || fail "source directory contains unexpected files"
