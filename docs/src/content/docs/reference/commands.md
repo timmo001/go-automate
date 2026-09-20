@@ -8,9 +8,8 @@ usage at the terminal.
 
 ## `go-automate`
 
-The root command. With no subcommand in an interactive terminal, it launches the
-[TUI](/using/tui/) when the `go-automate-tui` binary is available; otherwise it shows CLI
-help.
+The root command. With no subcommand, it shows CLI help after any required
+[first-run setup](/configuration/#first-run-setup).
 
 | Flag | Effect |
 | --- | --- |
@@ -144,7 +143,3 @@ optional second argument is the body. See [Notifications](/using/notifications/)
 ```bash
 go-automate notify "Build complete" "Your build finished successfully"
 ```
-
-## `tui`
-
-Launch the interactive [TUI](/using/tui/) menu.

@@ -4,7 +4,7 @@ description: Run tasks and control Home Assistant from the Go Automate command l
 ---
 
 The Go Automate CLI groups its commands by area. Most live under the `home-assistant`
-command (aliased `ha`), with `notify` and `tui` available at the top level. Every command
+command (aliased `ha`), with `notify` available at the top level. Every command
 group has short aliases so you can bind them to keyboard shortcuts comfortably.
 
 ## Command groups
@@ -13,7 +13,6 @@ group has short aliases so you can bind them to keyboard shortcuts comfortably.
 | --- | --- | --- |
 | `home-assistant` | `ha` | Control Home Assistant and watch entities. |
 | `notify` | `n` | Send a desktop notification. |
-| `tui` | | Launch the interactive terminal menu. |
 
 For the full command tree with every flag, see the [Commands reference](/reference/commands/).
 
@@ -45,18 +44,15 @@ go-automate notify "Build complete" "Your build finished successfully"
 
 See [Notifications](/using/notifications/) for the details.
 
-## The TUI
+## Help
 
-Running Go Automate with no command in an interactive terminal launches the
-[TUI](/using/tui/) automatically when the `go-automate-tui` binary is available. You can
-also launch it explicitly:
+Running Go Automate with no command shows CLI help after any required
+[first-run setup](/configuration/#first-run-setup). Use `--help` to see a command's usage:
 
 ```bash
-go-automate tui
+go-automate --help
+go-automate ha --help
 ```
-
-If you are not in an interactive terminal, or the TUI binary is not found, Go Automate
-continues in CLI mode.
 
 ## Tips
 

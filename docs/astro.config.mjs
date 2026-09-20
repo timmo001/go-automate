@@ -84,7 +84,6 @@ export default defineConfig({
           label: 'Using',
           items: [
             { label: 'CLI', slug: 'using/cli' },
-            { label: 'TUI', slug: 'using/tui' },
             { label: 'Home Assistant', slug: 'using/home-assistant' },
             { label: 'Watching Entities', slug: 'using/watching' },
             { label: 'Notifications', slug: 'using/notifications' },

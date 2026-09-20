@@ -3,7 +3,6 @@ min_version = "2025.1.0"
 [tools]
 go = "1.27.1"
 node = "24.21.0"
-bun = "1.4.2"
 # pnpm 11.8.0 is installed via the npm backend: the aqua backend ships a
 # broken linux asset name for this release.
 "npm:pnpm" = "12.5.1"
@@ -14,18 +13,6 @@ run = '''
 VERSION="$(.scripts/version.sh)"
 go build -v -ldflags="-X 'main.Version=$VERSION'" -o go-automate .
 '''
-
-[tasks."build:tui"]
-description = "Build the TUI binary (Bun)"
-dir = "tui"
-run = '''
-bun install
-bun build src/index.ts --compile --outfile ../go-automate-tui
-'''
-
-[tasks."build:all"]
-description = "Build both the Go app and the TUI"
-depends = ["build", "build:tui"]
 
 [tasks.install]
 description = "Install the application with go install"
@@ -58,11 +45,6 @@ run = "pitchfork restart ha-bridge"
 [tasks."serve:stop"]
 description = "Stop the pitchfork Home Assistant bridge"
 run = "pitchfork stop ha-bridge"
-
-[tasks."run:tui"]
-description = "Build and run the TUI directly"
-depends = ["build:tui"]
-run = "./go-automate-tui"
 
 [tasks."docs:dev"]
 description = "Run the documentation dev server"
@@ -104,21 +86,13 @@ run = "pnpm dlx markdownlint-cli --config .markdownlint.json \"**/*.md\""
 description = "Run all linters (Go, docs)"
 depends = ["lint:go", "docs:lint"]
 
-[tasks."typecheck:tui"]
-description = "Typecheck the TUI (tsc via the Effect language service)"
-dir = "tui"
-run = '''
-bun install --frozen-lockfile
-bun run typecheck
-'''
-
 [tasks.check]
 description = "Run all linters and tests"
-depends = ["lint:all", "typecheck:tui", "test"]
+depends = ["lint:all", "test"]
 
 [tasks.clean]
 description = "Remove build artifacts"
-run = "rm -f go-automate go-automate-tui"
+run = "rm -f go-automate"
 
 [tasks."clean:dist"]
 description = "Remove the build and dist directories"
@@ -128,7 +102,6 @@ run = "rm -rf build dist"
 description = "Install all dependencies"
 run = '''
 go mod tidy
-(cd tui && bun install)
 (cd docs && pnpm install)
 '''
 
@@ -139,7 +112,7 @@ run = "./go-automate --version"
 
 [tasks."package:arch"]
 description = "Create the Arch Linux package"
-depends = ["clean:dist", "build:all"]
+depends = ["clean:dist", "build"]
 run = '''
 VERSION="$(.scripts/version.sh)"
 export VERSION

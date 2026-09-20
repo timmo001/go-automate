@@ -15,7 +15,6 @@ on:
       - "config/**"
       - "homeassistant/**"
       - "notify/**"
-      - "tui/**"
       - .scripts/linux/PKGBUILD
       - .scripts/linux/arch-package.install
       - .scripts/linux/go-automate-home-assistant-bridge.service

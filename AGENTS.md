@@ -2,15 +2,14 @@
 
 ## Documentation
 - `docs/` is the source of truth for all user-facing documentation. It is an Astro/Starlight site; content lives in `docs/src/content/docs/` and is served at <https://go-automate.timmo.dev>.
-- Any change to behaviour, commands, flags, configuration, the bridge protocol, or the TUI must update the relevant page under `docs/src/content/docs/` in the same change.
+- Any change to behaviour, commands, flags, configuration, or the bridge protocol must update the relevant page under `docs/src/content/docs/` in the same change.
 - Keep the root `README.md` short; it should link to `docs/` rather than duplicate content. Do not let other Markdown files become a second source of truth.
-- Reference pages map to features: `using/cli.md`, `using/tui.md`, `using/home-assistant.md`, `using/watching.md`, `using/notifications.md`, `reference/commands.md`, `reference/bridge.md`, plus `install.mdx`, `configuration.mdx`, and `running.mdx`.
+- Reference pages map to features: `using/cli.md`, `using/home-assistant.md`, `using/watching.md`, `using/notifications.md`, `reference/commands.md`, `reference/bridge.md`, plus `install.mdx`, `configuration.mdx`, and `running.mdx`.
 - Verify doc edits build with `pnpm build` from the `docs/` directory.
 
 ## Build & Test Commands
-- Toolchain: `mise install` provisions Go, Bun, Node and pnpm from `mise.toml`; list tasks with `mise tasks`
+- Toolchain: `mise install` provisions Go, Node and pnpm from `mise.toml`; list tasks with `mise tasks`
 - Build: `mise run build` (plain `go build` also works)
-- Build app + TUI: `mise run build:all`
 - Package (Arch): `mise run package:arch`
 - Install or upgrade only from the published pacman package after its repository workflow succeeds. Do not install the local artifact from `dist/`.
 - Run: `mise run run` (or `go run main.go [command]`)

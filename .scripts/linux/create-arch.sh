@@ -23,14 +23,9 @@ if ! command -v makepkg >/dev/null 2>&1; then
   fi
 fi
 
-# Check if binaries exist
+# Check if the binary exists
 if [ ! -f "go-automate" ]; then
   echo "go-automate not found, please build the application first"
-  exit 1
-fi
-
-if [ ! -f "go-automate-tui" ]; then
-  echo "go-automate-tui not found, please build the TUI first (mise run build:tui)"
   exit 1
 fi
 
@@ -40,7 +35,6 @@ cd build/arch
 
 # Copy necessary files
 cp ../../go-automate go-automate
-cp ../../go-automate-tui go-automate-tui
 cp ../../LICENSE LICENSE
 cp ../../.scripts/linux/PKGBUILD.binary PKGBUILD
 cp ../../.scripts/linux/go-automate-home-assistant-bridge.service go-automate-home-assistant-bridge.service

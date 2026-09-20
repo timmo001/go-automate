@@ -1,7 +1,7 @@
 {
   "name": "go-automate-root-lsp",
   "private": true,
-  "description": "Root-level typescript so OpenCode's TS LSP resolves from the repo root (ctx.directory) for subprojects like tui/ and docs/. Not a real project.",
+  "description": "Root-level typescript so OpenCode's TS LSP resolves from the repo root (ctx.directory) for docs/. Not a real project.",
   "devDependencies": {
     "typescript": "^7.0.0"
   }
