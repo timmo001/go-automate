@@ -2,3 +2,6 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+
+# Renovate owns the default release delay and package-specific overrides.
+minimumReleaseAge: 0
