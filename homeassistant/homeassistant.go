@@ -3,11 +3,12 @@ package homeassistant
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/url"
+	"os"
 	"sync"
 	"sync/atomic"
 
-	"github.com/charmbracelet/log"
 	"github.com/gorilla/websocket"
 	"github.com/timmo001/go-automate/config"
 )
@@ -147,7 +148,8 @@ var (
 func Connect() *HomeAssistantConn {
 	conn, err := Dial(Config)
 	if err != nil {
-		log.Fatalf("Error connecting to Home Assistant: %v", err)
+		slog.Error("Error connecting to Home Assistant", "error", err)
+		os.Exit(1)
 	}
 
 	return conn
@@ -173,13 +175,13 @@ func Dial(cfg *config.ConfigHomeAssistant) (*HomeAssistantConn, error) {
 	}
 
 	wsUrl := url.URL{Scheme: wsScheme, Host: parsedURL.Host, Path: "/api/websocket"}
-	log.Infof("Connecting to Home Assistant at: %s", wsUrl.String())
+	slog.Info("Connecting to Home Assistant", "url", wsUrl.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(wsUrl.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("connect to Home Assistant websocket: %w", err)
 	}
-	log.Info("Connected to WebSocket")
+	slog.Info("Connected to WebSocket")
 	conn := &HomeAssistantConn{Conn: c}
 
 	if err := conn.authenticate(cfg.Token); err != nil {
@@ -199,7 +201,7 @@ func (conn *HomeAssistantConn) authenticate(token string) error {
 	if err := conn.ReadJSON(&welcomeResponse); err != nil {
 		return fmt.Errorf("read welcome message: %w", err)
 	}
-	log.Infof("First response: %v", welcomeResponse)
+	slog.Info("First response", "response", welcomeResponse)
 
 	authMessage := HomeAssistantAuthRequest{
 		Type:        "auth",
@@ -210,7 +212,7 @@ func (conn *HomeAssistantConn) authenticate(token string) error {
 	if err := conn.sendRequestInto(authMessage, false, &authResponse); err != nil {
 		return fmt.Errorf("authenticate websocket: %w", err)
 	}
-	log.Infof("Auth response: %v", authResponse)
+	slog.Info("Auth response", "response", authResponse)
 
 	if authResponse.Type != "auth_ok" {
 		return fmt.Errorf("authentication failed with response type %q", authResponse.Type)
@@ -232,9 +234,9 @@ func (conn *HomeAssistantConn) sendRequestInto(request any, debug bool, response
 	if debug {
 		b, err := json.Marshal(request)
 		if err != nil {
-			log.Errorf("Error marshalling request: %v", err)
+			slog.Error("Error marshalling request", "error", err)
 		} else {
-			log.Infof("Request: %s", b)
+			slog.Info("Request", "body", string(b))
 		}
 	}
 	conn.writeMu.Lock()
@@ -261,7 +263,7 @@ func (conn *HomeAssistantConn) GetStates() ([]HomeAssistantState, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshal get_states request: %w", err)
 	}
-	log.Infof("Request: %s", b)
+	slog.Info("Request", "body", string(b))
 
 	var response HomeAssistantResponse[[]HomeAssistantState]
 	if err := conn.sendRequestInto(request, false, &response); err != nil {

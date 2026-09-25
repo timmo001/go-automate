@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/timmo001/go-automate/config"
 )
 
@@ -114,7 +114,7 @@ func (bridge *Bridge) Serve(ctx context.Context) error {
 
 	go bridge.runUpstream(ctx)
 
-	log.Infof("Home Assistant bridge listening on %s", bridge.socketPath)
+	slog.Info("Home Assistant bridge listening", "socket", bridge.socketPath)
 
 	for {
 		conn, err := listener.Accept()
@@ -123,7 +123,7 @@ func (bridge *Bridge) Serve(ctx context.Context) error {
 				return nil
 			}
 
-			log.Errorf("Error accepting bridge connection: %v", err)
+			slog.Error("Error accepting bridge connection", "error", err)
 			continue
 		}
 
@@ -139,7 +139,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 
 		conn, err := Dial(bridge.cfg)
 		if err != nil {
-			log.Errorf("Error connecting bridge to Home Assistant: %v", err)
+			slog.Error("Error connecting bridge to Home Assistant", "error", err)
 			if !bridge.waitForReconnect(ctx) {
 				return
 			}
@@ -147,7 +147,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 		}
 
 		if err := bridge.syncStates(conn); err != nil {
-			log.Errorf("Error syncing Home Assistant state: %v", err)
+			slog.Error("Error syncing Home Assistant state", "error", err)
 			conn.Close()
 			if !bridge.waitForReconnect(ctx) {
 				return
@@ -159,7 +159,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 
 		response, err := conn.SubscribeEvents("state_changed")
 		if err != nil {
-			log.Errorf("Error subscribing to Home Assistant events: %v", err)
+			slog.Error("Error subscribing to Home Assistant events", "error", err)
 			conn.Close()
 			if !bridge.waitForReconnect(ctx) {
 				return
@@ -167,7 +167,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 			continue
 		}
 		if !response.Success {
-			log.Errorf("Home Assistant subscribe failed: %s", response.Error.Message)
+			slog.Error("Home Assistant subscribe failed", "message", response.Error.Message)
 			conn.Close()
 			if !bridge.waitForReconnect(ctx) {
 				return
@@ -175,7 +175,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 			continue
 		}
 
-		log.Info("Home Assistant bridge subscribed to state_changed")
+		slog.Info("Home Assistant bridge subscribed to state_changed")
 
 		for {
 			if ctx.Err() != nil {
@@ -185,7 +185,7 @@ func (bridge *Bridge) runUpstream(ctx context.Context) {
 
 			event, err := conn.ReadEvent()
 			if err != nil {
-				log.Errorf("Error reading Home Assistant event: %v", err)
+				slog.Error("Error reading Home Assistant event", "error", err)
 				conn.Close()
 				break
 			}
@@ -258,13 +258,13 @@ func (bridge *Bridge) getState(entityID string) (HomeAssistantState, bool) {
 func (bridge *Bridge) refreshNamer(conn *HomeAssistantConn) {
 	display, err := conn.GetEntityRegistryDisplay()
 	if err != nil {
-		log.Warnf("Error fetching entity registry for naming: %v", err)
+		slog.Warn("Error fetching entity registry for naming", "error", err)
 		return
 	}
 
 	devices, err := conn.GetDeviceRegistry()
 	if err != nil {
-		log.Warnf("Error fetching device registry for naming: %v", err)
+		slog.Warn("Error fetching device registry for naming", "error", err)
 		return
 	}
 
@@ -274,7 +274,7 @@ func (bridge *Bridge) refreshNamer(conn *HomeAssistantConn) {
 	bridge.namer = namer
 	bridge.namerMu.Unlock()
 
-	log.Infof("Home Assistant bridge cached naming for %d entities", len(display.Entities))
+	slog.Info("Home Assistant bridge cached naming", "entities", len(display.Entities))
 }
 
 // displayName resolves the structured display name for a state, falling back to
@@ -463,11 +463,11 @@ func isDisconnectError(err error) bool {
 
 func logBridgeWriteError(message string, err error) {
 	if isDisconnectError(err) {
-		log.Debugf("%s: client disconnected: %v", message, err)
+		slog.Debug(message+": client disconnected", "error", err)
 		return
 	}
 
-	log.Errorf("%s: %v", message, err)
+	slog.Error(message, "error", err)
 }
 
 func BridgeWatchEntity(

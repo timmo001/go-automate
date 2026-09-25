@@ -38,8 +38,11 @@ homeassistant:
 
 ## First-run setup
 
-If the token is empty when you start Go Automate in an interactive terminal, it walks you
-through a short setup form and writes the file for you.
+If the token is empty when you start Go Automate in an interactive terminal, it asks for
+your URL and token, then writes the file for you. Press Enter to keep the suggested URL.
+The token is not shown as you type or paste it.
+Press Ctrl+C to cancel setup. New config files are created with owner-only read and
+write permissions on Unix systems.
 
 <Steps>
 
@@ -72,7 +75,7 @@ yourself, before enabling the [bridge service](/running/).
 
 </Steps>
 
-The token is shown only once, so paste it straight into your config or the setup form.
+The token is shown only once, so paste it straight into your config or the setup prompt.
 
 ## Next steps
 

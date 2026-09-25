@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
-
-	"github.com/charmbracelet/log"
 
 	"github.com/timmo001/go-automate/config"
 	"github.com/timmo001/go-automate/homeassistant"
@@ -30,20 +29,20 @@ func main() {
 	completing := isShellCompletion()
 
 	if !completing {
-		log.Info("------ Go Automate ------")
+		slog.Info("------ Go Automate ------")
 	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		slog.Error("load config", "error", err)
+		os.Exit(1)
 	}
-
-	log.Debugf("Loaded config: %v", cfg)
 
 	if !completing {
 		cfg, err = cfg.Setup(isInteractiveSession())
 		if err != nil {
-			log.Fatalf("error: %v", err)
+			slog.Error("set up config", "error", err)
+			os.Exit(1)
 		}
 	}
 	homeassistant.Config = &cfg.HomeAssistant
@@ -126,7 +125,7 @@ func main() {
 								Aliases: []string{"a"},
 								Action: func(ctx context.Context, cmd *cli.Command) error {
 									message := cmd.Args().Get(1)
-									log.Infof("Announcing: %s", message)
+									slog.Info("Announcing", "message", message)
 
 									return cmdHACallService(
 										cmd,
@@ -281,11 +280,12 @@ func main() {
 	}
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		log.Fatalf("error running cmd: %v", err)
+		slog.Error("error running cmd", "error", err)
+		os.Exit(1)
 	}
 
 	if !completing {
-		log.Info("------ Exiting ------")
+		slog.Info("------ Exiting ------")
 	}
 }
 
@@ -459,7 +459,7 @@ func cmdHACallService(
 ) error {
 	args := cmd.Args()
 	firstArg := args.Get(0)
-	log.Infof("First arg: %s", firstArg)
+	slog.Info("First arg", "value", firstArg)
 
 	var target string
 	if targetType == "entity_id" {
@@ -484,7 +484,7 @@ func cmdHACallService(
 	if !resp.Success {
 		return fmt.Errorf("home assistant service %s.%s failed: %s", domain, service, resp.Error.Message)
 	}
-	log.Infof("Call service response: %v", resp)
+	slog.Info("Call service response", "response", resp)
 
 	return nil
 }
@@ -562,7 +562,7 @@ func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if cmd.Bool("direct") {
-		log.Warn("Direct watch mode enabled. Prefer `go-automate ha bridge watch entity` to reduce network usage.")
+		slog.Warn("Direct watch mode enabled. Prefer `go-automate ha bridge watch entity` to reduce network usage.")
 		return watchEntityDirect(entityID, options)
 	}
 
@@ -570,8 +570,8 @@ func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
 		if err := watchEntityViaBridge(ctx, socketPath, entityID, options); err == nil {
 			return nil
 		} else {
-			log.Warnf("Could not use Home Assistant bridge at %s, falling back to direct websocket: %v", socketPath, err)
-			log.Warn("Fallback to direct watch increases network usage. Start the bridge with `go-automate ha bridge serve`.")
+			slog.Warn("Could not use Home Assistant bridge, falling back to direct websocket", "socket", socketPath, "error", err)
+			slog.Warn("Fallback to direct watch increases network usage. Start the bridge with `go-automate ha bridge serve`.")
 		}
 	}
 
@@ -660,7 +660,7 @@ func warnIfPlainWatchOutput(options entityWatchOutputOptions) {
 		return
 	}
 
-	log.Warn("Watch output is plain text without --bar-json. Use --bar-json for stable JSON output in scripts and bars.")
+	slog.Warn("Watch output is plain text without --bar-json. Use --bar-json for stable JSON output in scripts and bars.")
 }
 
 func resolveBridgeSocketPath(socketPath string) (string, error) {
@@ -795,7 +795,8 @@ func printEntityState(state *homeassistant.HomeAssistantState, name string, opti
 
 		encoded, err := json.Marshal(payload)
 		if err != nil {
-			log.Fatalf("error marshalling bar JSON payload: %v", err)
+			slog.Error("error marshalling bar JSON payload", "error", err)
+			os.Exit(1)
 		}
 
 		fmt.Println(string(encoded))
@@ -858,7 +859,8 @@ func printCoverState(state *homeassistant.HomeAssistantState, name string) {
 	}
 	encoded, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatalf("error marshalling cover bar JSON payload: %v", err)
+		slog.Error("error marshalling cover bar JSON payload", "error", err)
+		os.Exit(1)
 	}
 	fmt.Println(string(encoded))
 }
@@ -875,7 +877,8 @@ func printClimateState(state *homeassistant.HomeAssistantState, name string) {
 	}
 	encoded, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatalf("error marshalling climate bar JSON payload: %v", err)
+		slog.Error("error marshalling climate bar JSON payload", "error", err)
+		os.Exit(1)
 	}
 	fmt.Println(string(encoded))
 }
