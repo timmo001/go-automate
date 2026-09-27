@@ -76,8 +76,8 @@ jobs:
   publish:
     name: Publish AUR (go-automate-git)
     needs: prepare
-    uses: >-  # master
-      timmo001/workflows/.github/workflows/publish-aur.yml@a4091353aaeb94959d5d667f11adc12e2f76ce04
+    # yamllint disable-line rule:line-length
+    uses: timmo001/workflows/.github/workflows/publish-aur.yml@0f94251168336b74fadf271a955d24d1de4de343 # 20260927.1
     with:
       package-name: go-automate-git
       artifact-name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
