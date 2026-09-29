@@ -77,7 +77,7 @@ jobs:
     name: Publish AUR (go-automate-git)
     needs: prepare
     # yamllint disable-line rule:line-length
-    uses: timmo001/workflows/.github/workflows/publish-aur.yml@0f94251168336b74fadf271a955d24d1de4de343 # 20260927.1
+    uses: timmo001/workflows/.github/workflows/publish-aur.yml@d787ea887605af00fd70650e7be38acbdab95aad # 20260929.0
     with:
       package-name: go-automate-git
       artifact-name: aur-go-automate-git-${{ github.run_id }}-${{ github.run_attempt }}
