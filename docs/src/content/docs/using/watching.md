@@ -12,20 +12,11 @@ Watch commands take the **full** entity ID, including its domain, for example
 [control commands](/using/home-assistant/), which take the name without the domain.
 :::
 
-## Two ways to watch
+## How watching works
 
-- **Through the bridge (recommended)** — `ha bridge watch entity` connects to the shared
-  [bridge](/running/), so many watchers reuse one connection to Home Assistant. This is the
-  best choice for status bars and long-running watchers.
-- **Direct (troubleshooting only)** — `ha watch entity` opens its own WebSocket connection.
-  It uses the bridge by default and only falls back to a direct connection if the bridge is
-  unavailable. Force a direct connection with `--direct` when debugging.
-
-:::caution
-Direct connections open a new WebSocket per watcher and increase network usage. Prefer the
-bridge for anything that runs continuously. Start it with
-[`go-automate ha bridge serve`](/running/).
-:::
+`ha bridge watch entity` connects to the shared [bridge](/running/), so many watchers reuse
+one connection to Home Assistant. Start the bridge with
+[`go-automate ha bridge serve`](/running/), or run it as a service.
 
 ## Watch through the bridge
 
@@ -38,21 +29,6 @@ The watcher prints the current state immediately, then prints again on every cha
 
 ```bash
 go-automate ha bridge watch entity input_boolean.guest_mode --socket /tmp/go-automate-ha.sock
-```
-
-## Watch directly
-
-`ha watch entity` uses the bridge when it can and falls back to a direct connection
-otherwise:
-
-```bash
-go-automate ha watch entity sensor.living_room_temperature
-```
-
-Force a direct connection for troubleshooting with `--direct`:
-
-```bash
-go-automate ha watch entity sensor.living_room_temperature --direct
 ```
 
 ## Status bars
@@ -70,7 +46,7 @@ go-automate ha bridge watch entity input_boolean.guest_mode \
   --tooltip-on "Guest mode is on" \
   --tooltip-off "Guest mode is off" \
   --class-on "active" \
-  --hide-off
+  --class-off "inactive"
 ```
 
 :::tip
@@ -81,14 +57,6 @@ JSON.
 
 For the full output contract, every `--bar-json` flag and a complete Waybar module, see
 [Bar JSON](/reference/bar-json/).
-
-Connection flags differ by command:
-
-| Flag | Command | Effect |
-| --- | --- | --- |
-| `--socket` | `ha bridge watch entity` | Path to the bridge socket. |
-| `--direct` | `ha watch entity` | Bypass the bridge and connect directly. |
-| `--bridge-socket` | `ha watch entity` | Path to the bridge socket to try before falling back. |
 
 ## Next steps
 

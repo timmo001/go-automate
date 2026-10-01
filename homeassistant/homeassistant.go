@@ -35,13 +35,12 @@ type HomeAssistantSubscribeEventsRequest struct {
 }
 
 type HomeAssistantCallServiceRequest struct {
-	ID             int         `json:"id"`
-	Type           string      `json:"type"`
-	Domain         string      `json:"domain"`
-	Service        string      `json:"service"`
-	ServiceData    interface{} `json:"service_data,omitempty"`
-	Target         interface{} `json:"target,omitempty"`
-	ReturnResponse bool        `json:"return_response,omitempty"`
+	ID          int         `json:"id"`
+	Type        string      `json:"type"`
+	Domain      string      `json:"domain"`
+	Service     string      `json:"service"`
+	ServiceData interface{} `json:"service_data,omitempty"`
+	Target      interface{} `json:"target,omitempty"`
 }
 
 type HomeAssistantState struct {

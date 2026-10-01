@@ -4,7 +4,7 @@
 - `docs/` is the source of truth for all user-facing documentation. It is an Astro/Starlight site; content lives in `docs/src/content/docs/` and is served at <https://go-automate.timmo.dev>.
 - Any change to behaviour, commands, flags, configuration, or the bridge protocol must update the relevant page under `docs/src/content/docs/` in the same change.
 - Keep the root `README.md` short; it should link to `docs/` rather than duplicate content. Do not let other Markdown files become a second source of truth.
-- Reference pages map to features: `using/cli.md`, `using/home-assistant.md`, `using/watching.md`, `using/notifications.md`, `reference/commands.md`, `reference/bridge.md`, plus `install.mdx`, `configuration.mdx`, and `running.mdx`.
+- Reference pages map to features: `using/cli.md`, `using/home-assistant.md`, `using/watching.md`, `reference/commands.md`, `reference/bridge.md`, plus `install.mdx`, `configuration.mdx`, and `running.mdx`.
 - Verify doc edits build with `pnpm build` from the `docs/` directory.
 
 ## Build & Test Commands
@@ -36,9 +36,7 @@
 
 ## Home Assistant Bridge Watch Policy (Go Automate)
 
-- For entity watchers, prefer bridge-backed commands by default: `go-automate ha bridge watch entity ...`
-- Treat direct websocket watcher usage as exceptional: allow only for explicit troubleshooting (`--direct`) and surface a warning in CLI output/help text
-- In help and flag descriptions, strongly recommend bridge watch for lower network usage
+- For entity watchers, use the bridge-backed command: `go-automate ha bridge watch entity ...`
 - When output is plain text (no `--bar-json`), warn users that machine consumers should prefer `--bar-json` JSON output
 
 ## Background Dev Servers

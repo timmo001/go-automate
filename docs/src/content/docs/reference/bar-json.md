@@ -8,12 +8,8 @@ change prints one JSON object on its own line. It is a generic JSON-lines contra
 works with any status bar, shell or script that reads line-delimited JSON, including
 [Waybar](https://github.com/Alexays/Waybar) and [Quickshell](https://quickshell.org/).
 
-It is supported by both watch commands:
-
-- [`ha bridge watch entity`](/reference/commands/) (recommended)
-- [`ha watch entity`](/reference/commands/)
-
-See [Watching Entities](/using/watching/) for when to use each one.
+It is emitted by [`ha bridge watch entity`](/reference/commands/). See
+[Watching Entities](/using/watching/) for how watching works.
 
 :::tip
 Whenever a watcher's output is consumed by a status bar or another program, use `--bar-json`.
@@ -61,12 +57,10 @@ refine them:
 
 **When the state is not `on`:**
 
-- `text` becomes empty if `--hide-off` is set, otherwise `--icon` if set, otherwise the state
-  with its unit of measurement. `--text-off` is then appended.
+- `text` becomes `--icon` if set, otherwise the state with its unit of measurement.
+  `--text-off` is then appended.
 - `tooltip` becomes `--tooltip-off` if set.
 - `class` becomes `--class-off` if set.
-- With `--hide-off`, `hidden` is appended to `class` (so the bar can hide the module while
-  keeping the line valid JSON).
 
 Any flag you leave unset keeps the field at its default, so a minimal `--bar-json` run still
 produces valid output with sensor units while preserving the raw state in `class`.
@@ -77,13 +71,12 @@ produces valid output with sensor units while preserving the raw state in `class
 model: the device name and the entity-specific name combined (for example
 `Living Room Thermostat Temperature`). The bridge watcher resolves it from the entity and
 device registries, which it fetches and caches when it connects to Home Assistant, so no
-extra request is made per watcher. The direct watcher (`ha watch entity --direct`) falls back
-to the entity's `friendly_name`. When no name can be resolved, the field is omitted rather
+extra request is made per watcher. When no name can be resolved, the field is omitted rather
 than emitted empty, and the flags above never change it.
 
 ## Flags
 
-These flags apply in `--bar-json` mode on both watch commands:
+These flags apply in `--bar-json` mode:
 
 | Flag | Effect |
 | --- | --- |
@@ -95,10 +88,8 @@ These flags apply in `--bar-json` mode on both watch commands:
 | `--tooltip-off` | Tooltip when the state is not `on`. |
 | `--class-on` | Status-bar class when the state is `on`. |
 | `--class-off` | Status-bar class when the state is not `on`. |
-| `--hide-off` | Hide the module (empty `text`, `hidden` appended to `class`) when the state is not `on`. |
 
-Connection flags differ by command. See [Commands](/reference/commands/) for `--socket`,
-`--direct` and `--bridge-socket`.
+See [Commands](/reference/commands/) for the `--socket` connection flag.
 
 ## Example
 
@@ -109,7 +100,7 @@ go-automate ha bridge watch entity input_boolean.guest_mode \
   --tooltip-on "Guest mode is on" \
   --tooltip-off "Guest mode is off" \
   --class-on "active" \
-  --hide-off
+  --class-off "inactive"
 ```
 
 With the entity on, this prints:
@@ -118,10 +109,10 @@ With the entity on, this prints:
 { "text": "Guest", "tooltip": "Guest mode is on", "class": "active" }
 ```
 
-With the entity off, `--hide-off` blanks the text and marks the class hidden:
+With the entity off, it prints:
 
 ```json
-{ "text": "", "tooltip": "Guest mode is off", "class": "off hidden" }
+{ "text": "off", "tooltip": "Guest mode is off", "class": "inactive" }
 ```
 
 ## Consuming the output
@@ -133,7 +124,7 @@ streams a JSON line on every state change, so the consumer updates live.
 
 ```json title="~/.config/waybar/config.jsonc"
 "custom/guest_mode": {
-  "exec": "go-automate ha bridge watch entity input_boolean.guest_mode --bar-json --text-on 'Guest' --tooltip-on 'Guest mode on' --tooltip-off 'Guest mode off' --class-on 'active' --hide-off",
+  "exec": "go-automate ha bridge watch entity input_boolean.guest_mode --bar-json --text-on 'Guest' --tooltip-on 'Guest mode on' --tooltip-off 'Guest mode off' --class-on 'active' --class-off 'inactive'",
   "return-type": "json",
   "restart-interval": 5
 }
@@ -160,6 +151,5 @@ consumer reconnects after a bridge restart.
 
 ## Next steps
 
-- See [Watching Entities](/using/watching/) for choosing between the bridge and direct
-  watchers.
+- See [Watching Entities](/using/watching/) for how bridge watchers work.
 - Run the [bridge](/running/) so many bar modules share one connection to Home Assistant.

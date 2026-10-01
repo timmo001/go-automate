@@ -14,7 +14,6 @@ import (
 
 	"github.com/timmo001/go-automate/config"
 	"github.com/timmo001/go-automate/homeassistant"
-	"github.com/timmo001/go-automate/notify"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 )
@@ -59,25 +58,6 @@ func main() {
 				Usage:   "Interact with Home Assistant",
 				Commands: []*cli.Command{
 					{
-						Name:    "watch",
-						Aliases: []string{"w"},
-						Usage:   "Watch Home Assistant entities for state changes (prefer bridge watch)",
-						Description: "For repeated or long-running watchers, prefer `go-automate ha bridge watch entity` to reduce " +
-							"network and websocket load. Use `--direct` only for explicit troubleshooting.",
-						Commands: []*cli.Command{
-							{
-								Name:        "entity",
-								Aliases:     []string{"e"},
-								ArgsUsage:   "<entity_id>",
-								Description: "If the bridge is available, this command uses it by default. Add `--bar-json` for machine-readable JSON output.",
-								Flags:       createEntityWatchFlags(true),
-								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHAWatchEntity(ctx, cmd)
-								},
-							},
-						},
-					},
-					{
 						Name:    "bridge",
 						Aliases: []string{"b"},
 						Usage:   "Run and query the local Home Assistant bridge",
@@ -107,7 +87,7 @@ func main() {
 										Aliases:     []string{"e"},
 										ArgsUsage:   "<entity_id>",
 										Description: "Bridge-backed watcher. Use `--bar-json` for stable JSON output for downstream commands.",
-										Flags:       createEntityWatchFlags(false, &cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
+										Flags:       createEntityWatchFlags(&cli.StringFlag{Name: "socket", Usage: "Path to the Home Assistant bridge socket"}),
 										Action: func(ctx context.Context, cmd *cli.Command) error {
 											return cmdHABridgeWatchEntity(ctx, cmd)
 										},
@@ -135,7 +115,6 @@ func main() {
 										map[string]string{
 											"message": message,
 										},
-										false,
 									)
 								},
 							},
@@ -172,7 +151,7 @@ func main() {
 									}
 									return cmdHACallService(cmd, "input_number", "set_value", "entity_id", map[string]float64{
 										"value": value,
-									}, false)
+									})
 								},
 							},
 						},
@@ -212,7 +191,7 @@ func main() {
 									}
 									return cmdHACallService(cmd, "cover", "set_cover_position", "entity_id", map[string]int{
 										"position": position,
-									}, false)
+									})
 								},
 							},
 							{
@@ -225,13 +204,13 @@ func main() {
 									}
 									return cmdHACallService(cmd, "cover", "set_cover_tilt_position", "entity_id", map[string]int{
 										"tilt_position": position,
-									}, false)
+									})
 								},
 							},
 							{
 								Name: "close",
 								Action: func(ctx context.Context, cmd *cli.Command) error {
-									return cmdHACallService(cmd, "cover", "close_cover", "entity_id", nil, false)
+									return cmdHACallService(cmd, "cover", "close_cover", "entity_id", nil)
 								},
 							},
 						},
@@ -261,19 +240,11 @@ func main() {
 									}
 									return cmdHACallService(cmd, "climate", "set_fan_mode", "entity_id", map[string]string{
 										"fan_mode": mode,
-									}, false)
+									})
 								},
 							},
 						},
 					},
-				},
-			},
-			{
-				Name:    "notify",
-				Aliases: []string{"n"},
-				Usage:   "Send a notification",
-				Action: func(ctx context.Context, cmd *cli.Command) error {
-					return cmdNotify(cmd)
 				},
 			},
 		},
@@ -373,27 +344,27 @@ func createToggleServiceCommands(domain string) []*cli.Command {
 			Name:    "turn-on",
 			Aliases: []string{"on"},
 			Action: func(ctx context.Context, cmd *cli.Command) error {
-				return cmdHACallService(cmd, domain, "turn_on", "entity_id", nil, false)
+				return cmdHACallService(cmd, domain, "turn_on", "entity_id", nil)
 			},
 		},
 		{
 			Name:    "turn-off",
 			Aliases: []string{"off"},
 			Action: func(ctx context.Context, cmd *cli.Command) error {
-				return cmdHACallService(cmd, domain, "turn_off", "entity_id", nil, false)
+				return cmdHACallService(cmd, domain, "turn_off", "entity_id", nil)
 			},
 		},
 		{
 			Name:    "toggle",
 			Aliases: []string{"t"},
 			Action: func(ctx context.Context, cmd *cli.Command) error {
-				return cmdHACallService(cmd, domain, "toggle", "entity_id", nil, false)
+				return cmdHACallService(cmd, domain, "toggle", "entity_id", nil)
 			},
 		},
 	}
 }
 
-func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []cli.Flag {
+func createEntityWatchFlags(extraFlags ...cli.Flag) []cli.Flag {
 	flags := []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "bar-json",
@@ -427,35 +398,15 @@ func createEntityWatchFlags(includeDirectFlags bool, extraFlags ...cli.Flag) []c
 			Name:  "class-off",
 			Usage: "Status bar class when the state is not on in bar JSON mode",
 		},
-		&cli.BoolFlag{
-			Name:  "hide-off",
-			Usage: "Hide the status bar module when the state is not on",
-		},
 	}
 
-	if includeDirectFlags {
-		flags = append(flags,
-			&cli.BoolFlag{
-				Name:  "direct",
-				Usage: "Bypass the local Home Assistant bridge and connect directly (not recommended; higher network usage)",
-			},
-			&cli.StringFlag{
-				Name:  "bridge-socket",
-				Usage: "Path to the Home Assistant bridge socket",
-			},
-		)
-	}
-
-	flags = append(flags, extraFlags...)
-
-	return flags
+	return append(flags, extraFlags...)
 }
 
 func cmdHACallService(
 	cmd *cli.Command,
 	domain, service, targetType string,
 	data any,
-	returnResponse bool,
 ) error {
 	args := cmd.Args()
 	firstArg := args.Get(0)
@@ -470,13 +421,12 @@ func cmdHACallService(
 
 	conn := homeassistant.Connect()
 	resp, err := conn.SendRequest(homeassistant.HomeAssistantCallServiceRequest{
-		ID:             homeassistant.RandomID(),
-		Type:           "call_service",
-		Domain:         domain,
-		Service:        service,
-		ServiceData:    data,
-		Target:         map[string]string{targetType: target},
-		ReturnResponse: returnResponse,
+		ID:          homeassistant.RandomID(),
+		Type:        "call_service",
+		Domain:      domain,
+		Service:     service,
+		ServiceData: data,
+		Target:      map[string]string{targetType: target},
 	}, true)
 	if err != nil {
 		return err
@@ -523,61 +473,6 @@ func cmdHAAdjustInputNumber(cmd *cli.Command, direction float64) error {
 	return nil
 }
 
-func cmdNotify(
-	cmd *cli.Command,
-) error {
-	args := cmd.Args()
-	summary := args.Get(0)
-	body := args.Get(1)
-
-	return notify.SendNotification(&notify.Notify{
-		Summary: summary,
-		Body:    &body,
-	})
-}
-
-func cmdHAWatchEntity(ctx context.Context, cmd *cli.Command) error {
-	args := cmd.Args()
-	entityID := args.Get(0)
-	if entityID == "" {
-		return fmt.Errorf("entity_id is required")
-	}
-
-	options := entityWatchOutputOptions{
-		BarJSON:    cmd.Bool("bar-json"),
-		Icon:       cmd.String("icon"),
-		TextOn:     cmd.String("text-on"),
-		TextOff:    cmd.String("text-off"),
-		TooltipOn:  cmd.String("tooltip-on"),
-		TooltipOff: cmd.String("tooltip-off"),
-		ClassOn:    cmd.String("class-on"),
-		ClassOff:   cmd.String("class-off"),
-		HideOff:    cmd.Bool("hide-off"),
-	}
-	warnIfPlainWatchOutput(options)
-
-	socketPath, err := resolveBridgeSocketPath(cmd.String("bridge-socket"))
-	if err != nil {
-		return err
-	}
-
-	if cmd.Bool("direct") {
-		slog.Warn("Direct watch mode enabled. Prefer `go-automate ha bridge watch entity` to reduce network usage.")
-		return watchEntityDirect(entityID, options)
-	}
-
-	if !cmd.Bool("direct") {
-		if err := watchEntityViaBridge(ctx, socketPath, entityID, options); err == nil {
-			return nil
-		} else {
-			slog.Warn("Could not use Home Assistant bridge, falling back to direct websocket", "socket", socketPath, "error", err)
-			slog.Warn("Fallback to direct watch increases network usage. Start the bridge with `go-automate ha bridge serve`.")
-		}
-	}
-
-	return watchEntityDirect(entityID, options)
-}
-
 func cmdHABridgeServe(ctx context.Context, cmd *cli.Command) error {
 	socketPath, err := resolveBridgeSocketPath(cmd.String("socket"))
 	if err != nil {
@@ -611,7 +506,6 @@ func cmdHABridgeWatchEntity(ctx context.Context, cmd *cli.Command) error {
 		TooltipOff: cmd.String("tooltip-off"),
 		ClassOn:    cmd.String("class-on"),
 		ClassOff:   cmd.String("class-off"),
-		HideOff:    cmd.Bool("hide-off"),
 	}
 	warnIfPlainWatchOutput(options)
 
@@ -683,43 +577,6 @@ func watchEntityViaBridge(
 	})
 }
 
-func watchEntityDirect(entityID string, options entityWatchOutputOptions) error {
-	conn := homeassistant.Connect()
-	defer conn.Close()
-
-	initialState, err := conn.GetState(entityID)
-	if err != nil {
-		return err
-	}
-	if initialState != nil {
-		printEntityState(initialState, initialState.FriendlyName(), options)
-	}
-
-	resp, err := conn.SubscribeEvents("state_changed")
-	if err != nil {
-		return err
-	}
-	if !resp.Success {
-		return fmt.Errorf("subscribe failed: %s", resp.Error.Message)
-	}
-
-	for {
-		event, err := conn.ReadEvent()
-		if err != nil {
-			return err
-		}
-		if event.Type != "event" || event.Event.EventType != "state_changed" {
-			continue
-		}
-
-		if event.Event.Data.EntityID != entityID || event.Event.Data.NewState == nil {
-			continue
-		}
-
-		printEntityState(event.Event.Data.NewState, event.Event.Data.NewState.FriendlyName(), options)
-	}
-}
-
 type entityWatchOutputOptions struct {
 	BarJSON    bool
 	Icon       string
@@ -729,7 +586,6 @@ type entityWatchOutputOptions struct {
 	TooltipOff string
 	ClassOn    string
 	ClassOff   string
-	HideOff    bool
 }
 
 func appendBarText(baseText string, label string) string {
@@ -761,12 +617,8 @@ func printEntityState(state *homeassistant.HomeAssistantState, name string, opti
 				className = options.ClassOn
 			}
 		} else {
-			if options.HideOff {
-				text = ""
-			} else if options.Icon != "" {
+			if options.Icon != "" {
 				text = options.Icon
-			} else if options.Icon == "" {
-				text = state.StateWithUnit()
 			}
 			text = appendBarText(text, options.TextOff)
 			if options.TooltipOff != "" {
@@ -774,13 +626,6 @@ func printEntityState(state *homeassistant.HomeAssistantState, name string, opti
 			}
 			if options.ClassOff != "" {
 				className = options.ClassOff
-			}
-			if options.HideOff {
-				if className == "" {
-					className = "hidden"
-				} else {
-					className += " hidden"
-				}
 			}
 		}
 
