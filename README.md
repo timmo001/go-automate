@@ -1,5 +1,8 @@
 # 🎛️ Go Automate
 
+> [!IMPORTANT]
+> Go Automate is archived and no longer maintained. It has been replaced by [Home Assistant Bridge](https://github.com/timmo001/ha-bridge) (`ha-bridge`), which covers everything Go Automate did and imports your Go Automate config. See [Migrating from Go Automate](https://ha-bridge.timmo.dev/migrating/).
+
 A utility to run common tasks.
 
 I call this app with keyboard shortcuts and patched apps in linux to trigger automations in my home using [Home Assistant](https://home-assistant.io).
