@@ -83,10 +83,6 @@ func NewBridge(cfg *config.ConfigHomeAssistant, socketPath string) (*Bridge, err
 	}, nil
 }
 
-func (bridge *Bridge) SocketPath() string {
-	return bridge.socketPath
-}
-
 func (bridge *Bridge) Serve(ctx context.Context) error {
 	if err := os.MkdirAll(filepath.Dir(bridge.socketPath), 0700); err != nil {
 		return fmt.Errorf("create bridge socket directory: %w", err)
