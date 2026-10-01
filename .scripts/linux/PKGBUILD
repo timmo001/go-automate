@@ -10,7 +10,6 @@ license=('Apache-2.0')
 keywords=('home-assistant' 'automation' 'cli' 'keyboard-shortcuts')
 install=arch-package.install
 makedepends=('git' 'go')
-depends=('libnotify')
 provides=('go-automate')
 conflicts=('go-automate')
 options=('!strip')

@@ -3,16 +3,15 @@ title: CLI
 description: Run tasks and control Home Assistant from the Go Automate command line.
 ---
 
-The Go Automate CLI groups its commands by area. Most live under the `home-assistant`
-command (aliased `ha`), with `notify` available at the top level. Every command
-group has short aliases so you can bind them to keyboard shortcuts comfortably.
+The Go Automate CLI groups its commands by area. Everything lives under the `home-assistant`
+command (aliased `ha`). Every command group has short aliases so you can bind them to
+keyboard shortcuts comfortably.
 
 ## Command groups
 
 | Command | Alias | Purpose |
 | --- | --- | --- |
 | `home-assistant` | `ha` | Control Home Assistant and watch entities. |
-| `notify` | `n` | Send a desktop notification. |
 
 For the full command tree with every flag, see the [Commands reference](/reference/commands/).
 
@@ -33,16 +32,6 @@ go-automate ha assist_satellite announce living_room "Dinner is ready"
 
 See [Home Assistant](/using/home-assistant/) for the full set of control commands, and
 [Watching Entities](/using/watching/) for live state.
-
-## Notify
-
-Send a desktop notification through `notify-send`:
-
-```bash
-go-automate notify "Build complete" "Your build finished successfully"
-```
-
-See [Notifications](/using/notifications/) for the details.
 
 ## Help
 

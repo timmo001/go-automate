@@ -12,7 +12,7 @@ Full documentation lives at **<https://go-automate.timmo.dev>**:
 - [Configuration](https://go-automate.timmo.dev/configuration/) — Home Assistant URL and token
 - [Running the Bridge](https://go-automate.timmo.dev/running/) — the systemd user service
 - [CLI](https://go-automate.timmo.dev/using/cli/)
-- [Home Assistant](https://go-automate.timmo.dev/using/home-assistant/), [Watching Entities](https://go-automate.timmo.dev/using/watching/) and [Notifications](https://go-automate.timmo.dev/using/notifications/)
+- [Home Assistant](https://go-automate.timmo.dev/using/home-assistant/) and [Watching Entities](https://go-automate.timmo.dev/using/watching/)
 - [Reference](https://go-automate.timmo.dev/reference/) — commands and the bridge protocol
 
 ## Quick start
